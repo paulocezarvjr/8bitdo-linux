@@ -10,6 +10,9 @@ captures/*.pcap
 
 # Transient per-run snapshots
 captures/kbd-snapshot-before.txt
+captures/ctl-config-2*.bin
+captures/ctl-backup-*.bin
+captures/ctl-autobackup-*.bin
 
 # Editor/OS
 .idea/
