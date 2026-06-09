@@ -168,11 +168,21 @@ export class KeyboardDevice {
   async mapKey(hwcode, usageInt) {
     this._drain();
     const ub = usageToBytes(usageInt);
-    await this._attn();
-    let e = await this._send([0xfa, 0x03, 0x0c, 0x00, 0xaa, 0x09, 0x71, hwcode, ...ub]);
-    if (!this._okAck(e)) throw new Error('MAP not acknowledged (' + fmt(e) + ')');
-    this.log('MAP ack ' + fmt(e));
-    e = await this._send([0x76, 0xa5]);
+    // An already-mapped key needs MAP sent twice: the 1st clears the old value
+    // (ack e4 07), the 2nd sets the new one (ack e4 08). Retry until 08.
+    let acked = false;
+    let last = null;
+    for (let i = 0; i < 4 && !acked; i++) {
+      await this._attn();
+      const e = await this._send([0xfa, 0x03, 0x0c, 0x00, 0xaa, 0x09, 0x71, hwcode, ...ub]);
+      last = e;
+      if (!this._okAck(e)) throw new Error('MAP not acknowledged (' + fmt(e) + ')');
+      const st = e.data.getUint8(1);
+      this.log('MAP ack ' + fmt(e) + (st === 0x08 ? ' (set)' : ' (cleared, retrying)'));
+      if (st === 0x08) acked = true;
+    }
+    if (!acked) throw new Error('MAP did not confirm set (last ' + fmt(last) + ')');
+    const e = await this._send([0x76, 0xa5]);
     if (!this._okAck(e)) throw new Error('MAP_DONE not acknowledged (' + fmt(e) + ')');
     this.log('MAP_DONE ack ' + fmt(e));
   }

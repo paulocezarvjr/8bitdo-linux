@@ -54,11 +54,23 @@ def drain(fd):
 
 def do_map(fd, hwcode, usage_bytes):
     drain(fd)
-    cmd(fd, ATTN)  # attention + discard
-    r = cmd(fd, MAP + [hwcode] + usage_bytes)
-    if r is None or not r.startswith(OK):
-        raise RuntimeError(f"map command not acknowledged: {r.hex() if r else 'timeout'}")
-    print(f"  MAP ack: {r[:3].hex()}")
+    # An already-mapped key needs MAP sent twice: the 1st clears the old value
+    # (ack 54 e4 07), the 2nd sets the new one (ack 54 e4 08). Retry until 08.
+    acked = False
+    last = None
+    for _ in range(4):
+        cmd(fd, ATTN)  # attention + discard
+        r = cmd(fd, MAP + [hwcode] + usage_bytes)
+        last = r
+        if r is None or not r.startswith(OK):
+            raise RuntimeError(f"map command not acknowledged: {r.hex() if r else 'timeout'}")
+        st = r[2]
+        print(f"  MAP ack: {r[:3].hex()} ({'set' if st == 0x08 else 'cleared, retrying'})")
+        if st == 0x08:
+            acked = True
+            break
+    if not acked:
+        raise RuntimeError(f"MAP did not confirm set (last {last[:3].hex() if last else None})")
     r = cmd(fd, MAP_DONE)
     if r is None or not r.startswith(OK):
         raise RuntimeError(f"map-done not acknowledged: {r.hex() if r else 'timeout'}")

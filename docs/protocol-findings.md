@@ -96,10 +96,12 @@ write MAP_DONE (52 76 a5)        + read -> ack 54 e4 ..
 ```
 - `<usage bytes>` = the target's HID usage big-endian, e.g. capslock `07 00 39`,
   esc `07 00 29`, previoussong `0c b6 00`. Disable = `07 00 00`.
-- **Gotcha:** the ack is `54 e4 <nn>` where the 3rd byte VARIES (seen `07` and
-  `08`). goncalor checks for exactly `54 e4 08`; that is too strict — match the
-  `54 e4` prefix instead. If you bail before sending MAP_DONE, the old mapping is
-  cleared but the new one is NOT committed (MAP_DONE commits it).
+- **Ack semantics (corrected):** the MAP ack is `54 e4 <st>`. `st = 0x08` means
+  the new value was SET; `st = 0x07` means the key already had a mapping and this
+  call only CLEARED it. **To remap an already-mapped key you must send MAP again
+  until you get `0x08`** (1st call clears, 2nd sets). This is exactly what
+  goncalor's "Maybe try again?" was working around (its strict `54 e4 08` check
+  fails on the clearing pass). `MAP_DONE` (`52 76 a5`) just finalizes.
 - Confirmed end-to-end: `map rightmeta capslock` → re-read shows
   `rightmeta -> capslock` with `menu -> nextsong` preserved.
 
