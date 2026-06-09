@@ -1,0 +1,6 @@
+[submodule "references/8bitdo-spec"]
+	path = references/8bitdo-spec
+	url = https://github.com/TheJayMann/8bitdo-spec
+[submodule "references/8bitdo-kbd-mapper"]
+	path = references/8bitdo-kbd-mapper
+	url = https://github.com/goncalor/8bitdo-kbd-mapper

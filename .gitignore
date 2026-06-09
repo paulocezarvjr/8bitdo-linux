@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Large captures — use git-lfs or force-add specific files
+captures/*.pcapng
+captures/*.pcap
+
+# Editor/OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

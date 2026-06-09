@@ -1,0 +1,25 @@
+
+=== hidraw0  (top Usage Page 0xFFA0, 42 bytes) ===
+hex: 06a0ff0901a1018502150026ff00190129027508953f81028581150026ff00190129027508953f9102c0
+  Report ID 2: Input=63B (wire 64B)
+  Report ID 129: Output=63B (wire 64B)
+
+=== hidraw3  (top Usage Page 0xFF00, 34 bytes) ===
+hex: 0600ff0901a1010902150026ff007508954081020903150026ff00750895409102c0
+  Report no ID: Input=64B (wire 64B), Output=64B (wire 64B)
+
+=== hidraw4  (top Usage Page 0xFF0B, 103 bytes) ===
+hex: 060bff0a0401a101150026ff007508953c852a096082020109619202010962b20201852b0965b20201170000008027ffffff7f75209504852c196629698102852d198a298d8102198e29919102c00602ff0901a1018514190029ff150026ff0075089514b102c0
+  Report ID 20: Feature=20B (wire 21B)
+  Report ID 42: Input=60B (wire 61B), Output=60B (wire 61B), Feature=60B (wire 61B)
+  Report ID 43: Feature=60B (wire 61B)
+  Report ID 44: Input=16B (wire 17B)
+  Report ID 45: Input=16B (wire 17B), Output=16B (wire 17B)
+
+=== hidraw6  (top Usage Page 0x008C, 82 bytes) ===
+hex: 058c0901a10185b10902150026ff0075089520810285b2090395207508150026ff0091028554150026ff0009077508952081028551090895207508150026ff0091028552090995207508150026ff009102c0
+  Report ID 81: Output=32B (wire 33B)
+  Report ID 82: Output=32B (wire 33B)
+  Report ID 84: Input=32B (wire 33B)
+  Report ID 177: Input=32B (wire 33B)
+  Report ID 178: Output=32B (wire 33B)
