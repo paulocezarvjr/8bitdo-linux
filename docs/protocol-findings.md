@@ -103,6 +103,21 @@ write MAP_DONE (52 76 a5)        + read -> ack 54 e4 ..
 - Confirmed end-to-end: `map rightmeta capslock` → re-read shows
   `rightmeta -> capslock` with `menu -> nextsong` preserved.
 
+### Keyboard — A/B Super Buttons (separate channel, NOT yet reversed)
+The big round **A/B Super Buttons** are configured through a different mechanism
+than the main matrix. `tools/kbd_scan.py` (read-only sweep of report `0x83` over
+hw codes 0x00..0xff) finds ONLY the matrix remaps (`rightmeta`, `menu`); nothing
+maps to the buttons' current output (observed: A→`7`, B→`8`). goncalor lists the
+external Super Buttons as unsupported.
+- Leads: the config interface exposes report IDs `0x51`(out), `0xB1`(in),
+  `0xB2`(out) that goncalor never uses (it only uses `0x52`/`0x54`). The firmware
+  note in protocol.txt (`b2 aa 55 03 ...`) is a `0xB2` command — so the Super
+  Button / macro / firmware features likely live on the `0x51`/`0xB1`/`0xB2`
+  channel.
+- A default Super Button can't be located via `0x83` (unmapped keys return
+  `0x000000`), so reversing this reliably needs a **Windows capture** of the
+  official software configuring A/B (diff one button at a time).
+
 ## `references/8bitdo-spec` (controllers) — files
 
 ```
@@ -160,5 +175,7 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 - [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
 - [x] Keyboard: write/remap on Linux. **Done** (`map rightmeta capslock` applied
       and verified; menu->nextsong preserved).
+- [ ] Keyboard: reverse the A/B Super Buttons (likely the `0x51`/`0xB1`/`0xB2`
+      channel; needs a Windows capture to do safely).
 - [ ] Mouse: identify which interface (hidraw3 vs hidraw4) the software uses;
       likely requires a Windows capture (USBPcap/API Monitor).
