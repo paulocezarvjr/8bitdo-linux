@@ -55,6 +55,14 @@ for (const c of 'abcdefghijklmnopqrstuvwxyz') CODE_TO_NAME['Key' + c.toUpperCase
 for (const d of '1234567890') CODE_TO_NAME['Digit' + d] = d;
 for (let i = 1; i <= 12; i++) CODE_TO_NAME['F' + i] = 'f' + i;
 
+/* modifier keys fire their own keydown — don't grab them on press, or you can
+   never reach the key in a combo. The keyboard remaps one key to ONE usage, so
+   chords (Ctrl+C) aren't supported; a lone modifier is assignable on release. */
+const MODIFIER_CODES = new Set([
+  'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight',
+  'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
+]);
+
 const MEDIA = ['previoussong', 'playpause', 'nextsong', 'mute', 'volumedown', 'volumeup'];
 const MOUSE = ['btn_left', 'btn_right', 'btn_middle', 'btn_extra', 'btn_side'];
 const MEDIA_LBL = { previoussong: '⏮ Prev', playpause: '⏯ Play', nextsong: '⏭ Next', mute: '🔇 Mute', volumedown: '🔉 Vol−', volumeup: '🔊 Vol+' };
@@ -65,6 +73,7 @@ let kbd = null;
 let mappings = new Map();   // hwcode -> { usageInt, target }
 let selected = null;        // { hw, code, lbl, cls }
 let listening = false;
+let pendingMod = null;      // code of a lone modifier held while listening
 
 /* ---------- helpers ---------- */
 function log(msg) {
@@ -158,19 +167,54 @@ function selectKey(item) {
   startListening();
 }
 
-function startListening() { listening = true; window.addEventListener('keydown', onKeydown, true); }
-function stopListening() { listening = false; window.removeEventListener('keydown', onKeydown, true); }
+function startListening() {
+  listening = true; pendingMod = null;
+  window.addEventListener('keydown', onKeydown, true);
+  window.addEventListener('keyup', onKeyup, true);
+}
+function stopListening() {
+  listening = false; pendingMod = null;
+  window.removeEventListener('keydown', onKeydown, true);
+  window.removeEventListener('keyup', onKeyup, true);
+}
 
 function onKeydown(e) {
   if (!listening) return;
   e.preventDefault(); e.stopPropagation();
   if (e.code === 'Escape') { closePanel(); return; }
+
+  // A modifier on its own: wait — the user may be reaching for a combo, or may
+  // want the modifier itself (assigned on keyup). Don't grab it now.
+  if (MODIFIER_CODES.has(e.code)) {
+    pendingMod = e.code;
+    $('#listenText').textContent = 'Tap a modifier alone to assign it, or press a single key…';
+    return;
+  }
+
+  // A real key while a modifier is held = a combo. One key maps to one usage,
+  // so chords like Ctrl+C aren't supported — tell the user instead of guessing.
+  if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
+    pendingMod = null;
+    $('#listenText').textContent = 'Combos like Ctrl+C aren’t supported — one key maps to one key. Release modifiers, then press a single key.';
+    return;
+  }
+
+  pendingMod = null;
   const name = CODE_TO_NAME[e.code];
   if (name && USAGE[name] !== undefined) {
     applyTarget(name);
   } else {
     $('#listenText').textContent = `“${e.code}” isn't mappable — try another key or use the buttons below`;
   }
+}
+
+// Lone modifier pressed and released with no other key in between -> assign it.
+function onKeyup(e) {
+  if (!listening || pendingMod !== e.code) return;
+  e.preventDefault(); e.stopPropagation();
+  pendingMod = null;
+  const name = CODE_TO_NAME[e.code];
+  if (name && USAGE[name] !== undefined) applyTarget(name);
 }
 
 async function applyTarget(usageName) {
