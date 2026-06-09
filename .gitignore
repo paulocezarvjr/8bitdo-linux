@@ -8,6 +8,9 @@ venv/
 captures/*.pcapng
 captures/*.pcap
 
+# Transient per-run snapshots
+captures/kbd-snapshot-before.txt
+
 # Editor/OS
 .idea/
 .vscode/

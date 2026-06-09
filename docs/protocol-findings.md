@@ -87,6 +87,22 @@ Flow per query: write ATTN (`52 76 ff`) + read(discard) → write query
 (`52 80` name / `52 81` mapped list / `52 83 <hwkey>` single mapping) + read
 (`54 ..`). Multi-chunk mapped list ends when the last byte != `0x01`.
 
+### Keyboard — WRITE WORKING (hidraw) — ✅
+`tools/kbd_write.py` remaps a key on the active profile:
+```
+write ATTN (52 76 ff)            + read(discard)
+write 52 fa 03 0c 00 aa 09 71 | <hwkey> | <usage bytes>   + read -> ack 54 e4 ..
+write MAP_DONE (52 76 a5)        + read -> ack 54 e4 ..
+```
+- `<usage bytes>` = the target's HID usage big-endian, e.g. capslock `07 00 39`,
+  esc `07 00 29`, previoussong `0c b6 00`. Disable = `07 00 00`.
+- **Gotcha:** the ack is `54 e4 <nn>` where the 3rd byte VARIES (seen `07` and
+  `08`). goncalor checks for exactly `54 e4 08`; that is too strict — match the
+  `54 e4` prefix instead. If you bail before sending MAP_DONE, the old mapping is
+  cleared but the new one is NOT committed (MAP_DONE commits it).
+- Confirmed end-to-end: `map rightmeta capslock` → re-read shows
+  `rightmeta -> capslock` with `menu -> nextsong` preserved.
+
 ## `references/8bitdo-spec` (controllers) — files
 
 ```
@@ -142,8 +158,7 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 - [ ] Controller: full block parser (port `config.hexpat` to Python).
 - [ ] Controller: figure out/implement CRC16 to enable safe writes.
 - [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
-- [ ] Keyboard: write/remap test (DESTRUCTIVE — snapshot current mappings first,
-      then restore; current state: profile 'standard', rightmeta->previoussong,
-      menu->nextsong).
+- [x] Keyboard: write/remap on Linux. **Done** (`map rightmeta capslock` applied
+      and verified; menu->nextsong preserved).
 - [ ] Mouse: identify which interface (hidraw3 vs hidraw4) the software uses;
       likely requires a Windows capture (USBPcap/API Monitor).
