@@ -181,6 +181,8 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 - [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
 - [x] Keyboard: write/remap on Linux, **verified on hardware** (B/`0x6c` ->
       capslock types Caps Lock with the profile engaged via the 8BitDo key).
+- [x] **WebHID web app** (`webapp/`): keyboard read + remap, **verified
+      in-browser** (Chrome). The NuPhy/VIA-style configurator, on Linux.
 - [ ] Keyboard (optional): reverse the ★ star layer + the unused
       `0x51`/`0xB1`/`0xB2` channel (macros/firmware); a Windows capture would
       make that safe.

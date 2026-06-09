@@ -41,5 +41,6 @@ the vendor collection (Usage Page `0x008C`), not the keyboard collection.
 
 ## Status
 
-Keyboard read + remap implemented. The protocol is verified against hardware via
-the Python tools; the WebHID glue should be tested in-browser against the device.
+Keyboard read + remap **verified in-browser** against the device (Chrome): reads
+the profile + current maps, and remaps reliably (resends MAP until the ack byte
+is `0x08`). Next ideas: a clickable keyboard layout, profile management, macros.
