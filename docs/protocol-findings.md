@@ -103,20 +103,24 @@ write MAP_DONE (52 76 a5)        + read -> ack 54 e4 ..
 - Confirmed end-to-end: `map rightmeta capslock` → re-read shows
   `rightmeta -> capslock` with `menu -> nextsong` preserved.
 
-### Keyboard — A/B Super Buttons (separate channel, NOT yet reversed)
-The big round **A/B Super Buttons** are configured through a different mechanism
-than the main matrix. `tools/kbd_scan.py` (read-only sweep of report `0x83` over
-hw codes 0x00..0xff) finds ONLY the matrix remaps (`rightmeta`, `menu`); nothing
-maps to the buttons' current output (observed: A→`7`, B→`8`). goncalor lists the
-external Super Buttons as unsupported.
-- Leads: the config interface exposes report IDs `0x51`(out), `0xB1`(in),
-  `0xB2`(out) that goncalor never uses (it only uses `0x52`/`0x54`). The firmware
-  note in protocol.txt (`b2 aa 55 03 ...`) is a `0xB2` command — so the Super
-  Button / macro / firmware features likely live on the `0x51`/`0xB1`/`0xB2`
-  channel.
-- A default Super Button can't be located via `0x83` (unmapped keys return
-  `0x000000`), so reversing this reliably needs a **Windows capture** of the
-  official software configuring A/B (diff one button at a time).
+### Keyboard — two remap layers (profile vs ★ star) — IMPORTANT
+The bottom-row **B and A keys ARE the matrix keys `0x6c` and `0x6d`** (the
+"rightmeta"/"menu" positions; the 87-key board has no separate right-Win/Menu).
+There are TWO independent remap layers:
+1. **Software / profile layer** — what our `0x52`/`0x83` protocol reads/writes
+   (profile `standard`). These remaps apply only when the profile is engaged via
+   the **8BitDo-logo key** (it lights a profile indicator). VERIFIED on hardware:
+   our Linux write `0x6c -> capslock` makes the **B key** type Caps Lock once the
+   profile is active.
+2. **★ star on-board layer** — the keyboard's native `★ -> target -> key` remap,
+   a SEPARATE store (a ★-map of `B -> space` did NOT change the software-read
+   `0x6c` value). This is what's live in the base / wired-config behavior.
+
+So in wired/switch-OFF config mode the profile layer is dormant (the software
+remap doesn't show up when typing); press the 8BitDo key (normal mode) to make it
+live. Earlier confusion ("B/A output 7/8", "no key does capslock") was simply the
+profile layer being off. The unused report IDs `0x51`/`0xB1`/`0xB2` may still
+drive the ★ layer / macros / firmware — not yet reversed.
 
 ## `references/8bitdo-spec` (controllers) — files
 
@@ -173,9 +177,10 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 - [ ] Controller: full block parser (port `config.hexpat` to Python).
 - [ ] Controller: figure out/implement CRC16 to enable safe writes.
 - [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
-- [x] Keyboard: write/remap on Linux. **Done** (`map rightmeta capslock` applied
-      and verified; menu->nextsong preserved).
-- [ ] Keyboard: reverse the A/B Super Buttons (likely the `0x51`/`0xB1`/`0xB2`
-      channel; needs a Windows capture to do safely).
+- [x] Keyboard: write/remap on Linux, **verified on hardware** (B/`0x6c` ->
+      capslock types Caps Lock with the profile engaged via the 8BitDo key).
+- [ ] Keyboard (optional): reverse the ★ star layer + the unused
+      `0x51`/`0xB1`/`0xB2` channel (macros/firmware); a Windows capture would
+      make that safe.
 - [ ] Mouse: identify which interface (hidraw3 vs hidraw4) the software uses;
       likely requires a Windows capture (USBPcap/API Monitor).
