@@ -20,7 +20,7 @@ import select
 import struct
 import sys
 
-VID, PID = "2dc8", "3109"
+VID = "2dc8"
 USAGE_PAGE = 0xFFA0
 CONFIG_BASE = 0x0674      # from diReadPro2.sh: bytes [11]=0x74 [12]=0x06
 CONFIG_LEN = 1652
@@ -28,8 +28,12 @@ CHUNK = 45
 RESP_DATA_OFFSET = 18     # from the script: data = response[18:18+size]
 
 
-def find_hidraw():
-    """Find the controller's /dev/hidrawN (VID:PID + Usage Page 0xFFA0)."""
+def find_config_hidraws():
+    """All 8BitDo (VID 2dc8) hidraw nodes exposing the config interface
+    (top-level Usage Page 0xFFA0). Works for the 2.4G dongle (PID 3109) and a
+    cable-connected controller alike, whatever PID it enumerates as.
+    Returns a list of (dev_path, pid)."""
+    found = []
     for hr in sorted(glob.glob("/sys/class/hidraw/hidraw*")):
         dev = os.path.join(hr, "device")
         try:
@@ -37,20 +41,23 @@ def find_hidraw():
         except OSError:
             continue
         m = re.search(r"HID_ID=[0-9A-Fa-f]+:0*([0-9A-Fa-f]{4}):0*([0-9A-Fa-f]{4})", uevent)
-        if not m:
+        if not m or m.group(1).lower() != VID:
             continue
-        if m.group(1).lower() != VID or m.group(2).lower() != PID:
-            continue
+        pid = m.group(2).lower()
         try:
             rd = open(os.path.join(dev, "report_descriptor"), "rb").read()
         except OSError:
             rd = b""
         # Usage Page (0x06 LSB MSB) at the very start of the vendor descriptor
-        if rd[:1] == b"\x06" and len(rd) >= 3:
-            up = rd[1] | (rd[2] << 8)
-            if up == USAGE_PAGE:
-                return "/dev/" + os.path.basename(hr)
-    return None
+        if rd[:1] == b"\x06" and len(rd) >= 3 and (rd[1] | (rd[2] << 8)) == USAGE_PAGE:
+            found.append(("/dev/" + os.path.basename(hr), pid))
+    return found
+
+
+def find_hidraw():
+    """First config-capable controller hidraw, or None."""
+    c = find_config_hidraws()
+    return c[0][0] if c else None
 
 
 def build_read_request(offset, size):
