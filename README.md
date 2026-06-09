@@ -13,7 +13,7 @@ protocol.
 
 | Device | PID | Receiver/Adapter | Status |
 |---|---|---|---|
-| Retro Mechanical Keyboard | `5201` | Retro Keyboard Receiver | ✅ protocol known (see `references/8bitdo-kbd-mapper`) |
+| Retro Mechanical Keyboard | `5201` | Retro Keyboard Receiver | ✅ read + remap, verified (CLI + WebHID app) |
 | Ultimate Wireless Controller | `3109` | "8BitDo IDLE" dongle + dock | 🟢 read working, write pending |
 | Retro R8 Mouse | `5206` | Retro R8 Mouse Adapter | 🔴 from scratch |
 
@@ -45,6 +45,7 @@ Full details and hex dumps in [`docs/protocol-findings.md`](docs/protocol-findin
 
 ```
 tools/        diagnostic/prototype scripts (Python)
+webapp/       browser configurator (WebHID) — the NuPhy/VIA-style app
 captures/     descriptor dumps and USB captures
 docs/         protocol documentation
 references/   submodules with existing reverse engineering
@@ -71,4 +72,14 @@ python3 tools/hidmap.py                  # map hidraw -> device/interface
 python3 tools/rdesc_decode.py hidraw0    # report IDs + sizes for one interface
 python3 tools/ctl_read.py                # read-only probe of the controller
 python3 tools/ctl_read.py --full --out captures/ctl-config.bin
+python3 tools/kbd_read.py                # read keyboard profile + remaps
+python3 tools/kbd_write.py map capslock esc   # remap a key
 ```
+
+## Web app (WebHID)
+
+```sh
+cd webapp && python3 -m http.server 8000   # then open http://localhost:8000 in Chrome/Edge
+```
+
+See [`webapp/README.md`](webapp/README.md).

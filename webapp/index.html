@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8BitDo Keyboard Configurator — Linux / WebHID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1><span class="logo">8</span>BitDo Keyboard Configurator</h1>
+    <p class="tag">Configure your Retro Mechanical Keyboard from the browser — no Ultimate Software, no Windows. Powered by WebHID.</p>
+  </header>
+
+  <main>
+    <section class="card connect-bar">
+      <button id="connect" class="primary">Connect keyboard</button>
+      <span id="status" class="status">Not connected</span>
+    </section>
+
+    <section class="card help">
+      <strong>Before connecting:</strong> plug the keyboard in <em>by USB cable</em> with the
+      power switch <em>OFF</em>. Remaps are written to the on-keyboard <em>profile</em> — press the
+      <span class="kbd">8BitDo</span> key to activate that profile and see them live.
+      Requires a Chromium browser (Chrome/Edge) served over <code>http://localhost</code>.
+    </section>
+
+    <div id="panel" hidden>
+      <section class="card">
+        <div class="row">
+          <h2>Current profile: <span id="profile" class="accent">—</span></h2>
+          <button id="refresh" class="ghost">↻ refresh</button>
+        </div>
+        <table>
+          <thead><tr><th>Hardware key</th><th>Mapped to</th><th></th></tr></thead>
+          <tbody id="maps"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Remap a key</h2>
+        <div class="form">
+          <label>Hardware key
+            <select id="hwkey"></select>
+          </label>
+          <span class="arrow">→</span>
+          <label>Maps to
+            <select id="target"></select>
+          </label>
+          <button id="apply" class="primary">Apply</button>
+          <button id="disable" class="danger">Disable key</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Log</h2>
+        <pre id="log" class="log"></pre>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Part of <a href="https://github.com/">8bitdo-linux</a> — reverse-engineered HID protocol. Your hardware, your data; everything runs locally in the browser.</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
