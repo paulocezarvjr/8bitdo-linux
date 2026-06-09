@@ -68,9 +68,24 @@ Report 0xB2 : Output 32B
   timing-sensitive (delays between messages matter).
 - Disabling a key = mapping it to `0x0000`. Only written to the active profile.
 - **Important:** the official/goncalor tool configures with the keyboard **over a
-  USB cable and the power switch OFF**. Verify whether the *receiver's* report IDs
-  (hidraw6) accept config or whether the cabled keyboard (which enumerates with a
-  different PID) is required.
+  USB cable and the power switch OFF**. The cabled keyboard enumerates as a
+  different PID (**`5200`**, vs receiver `5201`); its config interface is the
+  `0x008C` one (e.g. `hidraw16`).
+
+### Keyboard — READ WORKING (hidraw) — ✅
+`tools/kbd_read.py` reads the active profile + mappings over **hidraw** (no
+libusb / no kernel-driver detach — goncalor detaches only because it uses raw
+libusb endpoints). Confirmed against the real keyboard:
+```
+device: /dev/hidraw16
+active profile: 'standard'
+mapped keys (2):
+   rightmeta (0x6c)  ->  previoussong
+        menu (0x6d)  ->  nextsong
+```
+Flow per query: write ATTN (`52 76 ff`) + read(discard) → write query
+(`52 80` name / `52 81` mapped list / `52 83 <hwkey>` single mapping) + read
+(`54 ..`). Multi-chunk mapped list ends when the last byte != `0x01`.
 
 ## `references/8bitdo-spec` (controllers) — files
 
@@ -126,7 +141,9 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 - [x] Controller: read config via OUT `0x81` / IN `0x02` (read-only). **Done.**
 - [ ] Controller: full block parser (port `config.hexpat` to Python).
 - [ ] Controller: figure out/implement CRC16 to enable safe writes.
-- [ ] Keyboard: install/run `8bitdo-kbd-mapper`, validate an end-to-end remap
-      (needs the keyboard over a cable, switch OFF).
+- [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
+- [ ] Keyboard: write/remap test (DESTRUCTIVE — snapshot current mappings first,
+      then restore; current state: profile 'standard', rightmeta->previoussong,
+      menu->nextsong).
 - [ ] Mouse: identify which interface (hidraw3 vs hidraw4) the software uses;
       likely requires a Windows capture (USBPcap/API Monitor).
