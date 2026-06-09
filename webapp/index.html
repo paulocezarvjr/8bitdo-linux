@@ -3,64 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>8BitDo Keyboard Configurator — Linux / WebHID</title>
+  <title>8BitDo Keymap — Retro Mechanical Keyboard configurator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1><span class="logo">8</span>BitDo Keyboard Configurator</h1>
-    <p class="tag">Configure your Retro Mechanical Keyboard from the browser — no Ultimate Software, no Windows. Powered by WebHID.</p>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">8</span>
+      <span class="wordmark">BITDO<i>keymap</i></span>
+    </div>
+    <div class="top-actions">
+      <span id="status" class="pill">● offline</span>
+      <button id="connect" class="btn primary">Connect keyboard</button>
+    </div>
   </header>
 
   <main>
-    <section class="card connect-bar">
-      <button id="connect" class="primary">Connect keyboard</button>
-      <span id="status" class="status">Not connected</span>
+    <!-- empty / connect state -->
+    <section id="hero" class="hero">
+      <h1>Remap your keyboard.<br><span class="hl">No Windows. No installs.</span></h1>
+      <p>A browser configurator for the 8BitDo Retro Mechanical Keyboard, talking
+         straight to the hardware over WebHID. Click a key, press what you want it
+         to become. Done.</p>
+      <button id="connect2" class="btn primary big">Connect keyboard</button>
+      <ul class="checklist">
+        <li>Plug in by <b>USB cable</b>, power switch <b>OFF</b></li>
+        <li>Use <b>Chrome</b> or <b>Edge</b> (WebHID)</li>
+        <li>Press the <span class="kc">8BitDo</span> key on the board to make remaps live</li>
+      </ul>
     </section>
 
-    <section class="card help">
-      <strong>Before connecting:</strong> plug the keyboard in <em>by USB cable</em> with the
-      power switch <em>OFF</em>. Remaps are written to the on-keyboard <em>profile</em> — press the
-      <span class="kbd">8BitDo</span> key to activate that profile and see them live.
-      Requires a Chromium browser (Chrome/Edge) served over <code>http://localhost</code>.
+    <!-- workspace -->
+    <section id="workspace" hidden>
+      <div class="board-head">
+        <div>
+          <span class="muted">profile</span>
+          <span id="profile" class="profile">—</span>
+        </div>
+        <div class="legendbar">
+          <span class="lg"><i class="sw default"></i>default</span>
+          <span class="lg"><i class="sw mapped"></i>remapped</span>
+          <span class="lg"><i class="sw ab"></i>A / B keys</span>
+        </div>
+        <button id="refresh" class="btn ghost">↻ refresh</button>
+      </div>
+
+      <div class="board-wrap">
+        <div class="case">
+          <div class="case-top">
+            <span class="knob"></span>
+            <span class="brand-mini">RETRO MECHANICAL · TKL</span>
+            <span class="dot-led"></span>
+          </div>
+          <div id="board" class="board"></div>
+        </div>
+      </div>
+
+      <p class="hint" id="hint">Click any key to remap it.</p>
     </section>
-
-    <div id="panel" hidden>
-      <section class="card">
-        <div class="row">
-          <h2>Current profile: <span id="profile" class="accent">—</span></h2>
-          <button id="refresh" class="ghost">↻ refresh</button>
-        </div>
-        <table>
-          <thead><tr><th>Hardware key</th><th>Mapped to</th><th></th></tr></thead>
-          <tbody id="maps"></tbody>
-        </table>
-      </section>
-
-      <section class="card">
-        <h2>Remap a key</h2>
-        <div class="form">
-          <label>Hardware key
-            <select id="hwkey"></select>
-          </label>
-          <span class="arrow">→</span>
-          <label>Maps to
-            <select id="target"></select>
-          </label>
-          <button id="apply" class="primary">Apply</button>
-          <button id="disable" class="danger">Disable key</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Log</h2>
-        <pre id="log" class="log"></pre>
-      </section>
-    </div>
   </main>
 
+  <!-- remap panel -->
+  <div id="panel" class="panel" hidden>
+    <div class="panel-inner">
+      <button class="panel-close" id="panelClose" aria-label="cancel">✕</button>
+      <div class="panel-key">
+        <div class="big-cap" id="panelCap">B</div>
+        <div class="panel-meta">
+          <div class="muted">remapping</div>
+          <div class="panel-name" id="panelName">rightmeta</div>
+          <div class="panel-now" id="panelNow"></div>
+        </div>
+      </div>
+
+      <div class="listen" id="listen">
+        <span class="rec"></span>
+        <span id="listenText">Press any key to assign…</span>
+      </div>
+
+      <div class="quick">
+        <div class="quick-group">
+          <span class="quick-label">Media</span>
+          <div class="chips" id="mediaChips"></div>
+        </div>
+        <div class="quick-group">
+          <span class="quick-label">Mouse</span>
+          <div class="chips" id="mouseChips"></div>
+        </div>
+        <div class="quick-group">
+          <span class="quick-label">Actions</span>
+          <div class="chips">
+            <button class="chip danger" data-action="disable">Disable</button>
+            <button class="chip" data-action="reset">Reset to default</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- log drawer -->
+  <aside class="logwrap">
+    <button id="logToggle" class="log-toggle">› log</button>
+    <pre id="log" class="log" hidden></pre>
+  </aside>
+
   <footer>
-    <p>Part of <a href="https://github.com/">8bitdo-linux</a> — reverse-engineered HID protocol. Your hardware, your data; everything runs locally in the browser.</p>
+    Unofficial community tool · part of <a href="https://github.com/">8bitdo-linux</a> ·
+    runs entirely in your browser, on your hardware.
   </footer>
 
   <script type="module" src="app.js"></script>

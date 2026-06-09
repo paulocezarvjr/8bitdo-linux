@@ -18,8 +18,9 @@ python3 -m http.server 8000
 
 1. Connect the keyboard by **USB cable** with the power switch **OFF** (config mode).
 2. Click **Connect keyboard** and pick the *8BitDo Retro Keyboard* entry.
-3. The current profile + remaps load. Use **Remap a key** to change one, **reset**
-   to restore a key's default, or **Disable key**.
+3. A rendered TKL keyboard appears with current remaps highlighted. **Click a key**,
+   then **press the key** you want it to become (or pick a media/mouse target, or
+   Disable / Reset to default). `Esc` cancels.
 4. Remaps are written to the on-keyboard **profile** — press the **8BitDo key** on
    the keyboard to activate that profile and see them live.
 
@@ -43,4 +44,6 @@ the vendor collection (Usage Page `0x008C`), not the keyboard collection.
 
 Keyboard read + remap **verified in-browser** against the device (Chrome): reads
 the profile + current maps, and remaps reliably (resends MAP until the ack byte
-is `0x08`). Next ideas: a clickable keyboard layout, profile management, macros.
+is `0x08`). UI is a rendered TKL keyboard — click a key, press the target to
+assign (capture via `keydown`), with a panel for media/mouse/disable/reset.
+Next ideas: profile management, macros, controller support.
