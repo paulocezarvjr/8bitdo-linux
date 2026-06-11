@@ -59,17 +59,22 @@
 
       <div class="board-wrap">
         <div class="case">
+          <!-- mirrors the real top plate: knob over Esc, knob over the Esc–F1
+               gap, three round buttons over F1–F3, then the plate strip from
+               F4 to the power LED -->
           <div class="case-top">
-            <span class="cluster" aria-hidden="true">
-              <span class="knob"></span>
-              <span class="knob"></span>
+            <span class="kslot" aria-hidden="true"><span class="knob"></span></span>
+            <span class="kslot" aria-hidden="true"><span class="knob"></span></span>
+            <span class="cbtns" aria-hidden="true">
               <span class="cbtn"></span>
               <span class="cbtn"></span>
               <span class="cbtn"></span>
             </span>
-            <span class="brand-mini">RETRO MECHANICAL · TKL</span>
-            <span class="vents" aria-hidden="true"></span>
-            <span class="dot-led"></span>
+            <div class="plate">
+              <span class="brand-mini">RETRO MECHANICAL · TKL</span>
+              <span class="vents" aria-hidden="true"></span>
+              <span class="dot-led"></span>
+            </div>
           </div>
           <div id="board" class="board"></div>
         </div>
