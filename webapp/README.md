@@ -23,6 +23,10 @@ python3 -m http.server 8000
    Disable / Reset to default). `Esc` cancels.
 4. Remaps are written to the on-keyboard **profile** — press the **8BitDo key** on
    the keyboard to activate that profile and see them live.
+5. The **⌨ theme** button skins the rendered board to match your edition
+   (N, Fami, C64, Xbox — palettes taken from the official product shots); the
+   choice persists in the browser. Adding an edition is one CSS var block in
+   `style.css` plus one entry in `THEMES` in `app.js`.
 
 > Don't run the Python tools at the same time — both open the same HID device.
 

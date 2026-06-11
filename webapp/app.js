@@ -8,35 +8,37 @@ const $ = (s) => document.querySelector(s);
 const k = (hw, lbl, w = 1, cls = '') => ({ hw, lbl, w, cls });
 const sp = (w) => ({ sp: w });
 
+/* cls tags key GROUPS so edition themes can repaint them: mod (modifiers),
+   nav (nav cluster + PrtSc row), frow (F1-F12), arrow, esc, ab (B/A keys). */
 const LAYOUT = [
-  [k('esc', 'Esc'), sp(1),
-   k('f1', 'F1'), k('f2', 'F2'), k('f3', 'F3'), k('f4', 'F4'), sp(0.5),
-   k('f5', 'F5'), k('f6', 'F6'), k('f7', 'F7'), k('f8', 'F8'), sp(0.5),
-   k('f9', 'F9'), k('f10', 'F10'), k('f11', 'F11'), k('f12', 'F12'), sp(0.5),
-   k('prtsc', 'PrtSc'), k('scrlk', 'ScrLk'), k('pause', 'Pause')],
+  [k('esc', 'Esc', 1, 'esc'), sp(1),
+   k('f1', 'F1', 1, 'frow'), k('f2', 'F2', 1, 'frow'), k('f3', 'F3', 1, 'frow'), k('f4', 'F4', 1, 'frow'), sp(0.5),
+   k('f5', 'F5', 1, 'frow'), k('f6', 'F6', 1, 'frow'), k('f7', 'F7', 1, 'frow'), k('f8', 'F8', 1, 'frow'), sp(0.5),
+   k('f9', 'F9', 1, 'frow'), k('f10', 'F10', 1, 'frow'), k('f11', 'F11', 1, 'frow'), k('f12', 'F12', 1, 'frow'), sp(0.5),
+   k('prtsc', 'PrtSc', 1, 'nav'), k('scrlk', 'ScrLk', 1, 'nav'), k('pause', 'Pause', 1, 'nav')],
 
   [k('grave', '`'), k('1', '1'), k('2', '2'), k('3', '3'), k('4', '4'), k('5', '5'),
    k('6', '6'), k('7', '7'), k('8', '8'), k('9', '9'), k('0', '0'),
-   k('minus', '-'), k('equal', '='), k('backspace', '⌫', 2), sp(0.5),
-   k('insert', 'Ins'), k('home', 'Home'), k('pageup', 'PgUp')],
+   k('minus', '-'), k('equal', '='), k('backspace', '⌫', 2, 'mod'), sp(0.5),
+   k('insert', 'Ins', 1, 'nav'), k('home', 'Home', 1, 'nav'), k('pageup', 'PgUp', 1, 'nav')],
 
-  [k('tab', 'Tab', 1.5), k('q', 'Q'), k('w', 'W'), k('e', 'E'), k('r', 'R'), k('t', 'T'),
+  [k('tab', 'Tab', 1.5, 'mod'), k('q', 'Q'), k('w', 'W'), k('e', 'E'), k('r', 'R'), k('t', 'T'),
    k('y', 'Y'), k('u', 'U'), k('i', 'I'), k('o', 'O'), k('p', 'P'),
    k('leftbrace', '['), k('rightbrace', ']'), k('backslash', '\\', 1.5), sp(0.5),
-   k('delete', 'Del'), k('end', 'End'), k('pagedown', 'PgDn')],
+   k('delete', 'Del', 1, 'nav'), k('end', 'End', 1, 'nav'), k('pagedown', 'PgDn', 1, 'nav')],
 
-  [k('capslock', 'Caps', 1.75), k('a', 'A'), k('s', 'S'), k('d', 'D'), k('f', 'F'), k('g', 'G'),
+  [k('capslock', 'Caps', 1.75, 'mod'), k('a', 'A'), k('s', 'S'), k('d', 'D'), k('f', 'F'), k('g', 'G'),
    k('h', 'H'), k('j', 'J'), k('k', 'K'), k('l', 'L'),
-   k('semicolon', ';'), k('apostrophe', '\''), k('enter', 'Enter', 2.25), sp(3.5)],
+   k('semicolon', ';'), k('apostrophe', '\''), k('enter', 'Enter', 2.25, 'mod'), sp(3.5)],
 
-  [k('leftshift', 'Shift', 2.25), k('z', 'Z'), k('x', 'X'), k('c', 'C'), k('v', 'V'), k('b', 'B'),
+  [k('leftshift', 'Shift', 2.25, 'mod'), k('z', 'Z'), k('x', 'X'), k('c', 'C'), k('v', 'V'), k('b', 'B'),
    k('n', 'N'), k('m', 'M'), k('comma', ','), k('dot', '.'), k('slash', '/'),
-   k('rightshift', 'Shift', 2.75), sp(1.5), k('up', '↑'), sp(1)],
+   k('rightshift', 'Shift', 2.75, 'mod'), sp(1.5), k('up', '↑', 1, 'arrow'), sp(1)],
 
-  [k('leftctrl', 'Ctrl', 1.25), k('leftmeta', 'Win', 1.25), k('leftalt', 'Alt', 1.25),
-   k('space', '', 6.25), k('rightalt', 'Alt', 1.25),
-   k('rightmeta', 'B', 1.25, 'ab'), k('menu', 'A', 1.25, 'ab'), k('rightctrl', 'Ctrl', 1.25), sp(0.5),
-   k('left', '←'), k('down', '↓'), k('right', '→')],
+  [k('leftctrl', 'Ctrl', 1.25, 'mod'), k('leftmeta', 'Win', 1.25, 'mod'), k('leftalt', 'Alt', 1.25, 'mod'),
+   k('space', '', 6.25), k('rightalt', 'Alt', 1.25, 'mod'),
+   k('rightmeta', 'B', 1.25, 'ab'), k('menu', 'A', 1.25, 'ab'), k('rightctrl', 'Ctrl', 1.25, 'mod'), sp(0.5),
+   k('left', '←', 1, 'arrow'), k('down', '↓', 1, 'arrow'), k('right', '→', 1, 'arrow')],
 ];
 
 /* browser KeyboardEvent.code -> our canonical name (works for HWKEY and USAGE) */
@@ -62,6 +64,18 @@ const MODIFIER_CODES = new Set([
   'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight',
   'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
 ]);
+
+/* ---------- edition themes ----------
+   Colors live in style.css as body[data-theme="…"] var blocks; this list only
+   drives the picker. Adding an edition = one CSS block + one entry here. */
+const THEMES = [
+  { id: '',     label: 'Default',      sw: ['#efe9da', '#211e2a', '#ff2e3f'] },
+  { id: 'n',    label: 'N Edition',    sw: ['#ece7da', '#53525e', '#dd4136'] },
+  { id: 'fami', label: 'Fami Edition', sw: ['#f4edde', '#7c2b33', '#312c2a'] },
+  { id: 'c64',  label: 'C64 Edition',  sw: ['#41382d', '#6e655a', '#ddd0b2'] },
+  { id: 'xbox', label: 'Xbox Edition', sw: ['#5f8424', '#46641c', '#f2b705'] },
+];
+const THEME_KEY = '8bitdo-kbd-theme';
 
 const MEDIA = ['previoussong', 'playpause', 'nextsong', 'mute', 'volumedown', 'volumeup'];
 const MOUSE = ['btn_left', 'btn_right', 'btn_middle', 'btn_extra', 'btn_side'];
@@ -284,6 +298,27 @@ function testerFlash(e) {
   if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
 
+/* ---------- themes ---------- */
+function applyTheme(id) {
+  if (id) document.body.dataset.theme = id;
+  else delete document.body.dataset.theme;
+  try { localStorage.setItem(THEME_KEY, id); } catch { /* private mode etc */ }
+  document.querySelectorAll('.titem').forEach((b) =>
+    b.classList.toggle('active', b.dataset.theme === id));
+}
+
+function buildThemeMenu() {
+  const menu = $('#themeMenu');
+  for (const t of THEMES) {
+    const b = document.createElement('button');
+    b.className = 'titem';
+    b.dataset.theme = t.id;
+    b.innerHTML = `<span class="dots">${t.sw.map((c) => `<i style="background:${c}"></i>`).join('')}</span>${t.label}`;
+    b.addEventListener('click', () => { applyTheme(t.id); $('#themeMenu').hidden = true; });
+    menu.appendChild(b);
+  }
+}
+
 /* ---------- chips ---------- */
 function buildChips() {
   const media = $('#mediaChips'); const mouse = $('#mouseChips');
@@ -300,6 +335,18 @@ function chip(label, onClick) {
 /* ---------- init ---------- */
 window.addEventListener('DOMContentLoaded', () => {
   buildChips();
+  buildThemeMenu();
+  let saved = '';
+  try { saved = localStorage.getItem(THEME_KEY) || ''; } catch { /* private mode etc */ }
+  applyTheme(THEMES.some((t) => t.id === saved) ? saved : '');
+  $('#themeBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = $('#themeMenu');
+    m.hidden = !m.hidden;
+  });
+  document.addEventListener('click', (e) => {
+    if (!$('#themeMenu').hidden && !e.target.closest('.themer')) $('#themeMenu').hidden = true;
+  });
   $('#connect').addEventListener('click', connect);
   $('#connect2').addEventListener('click', connect);
   $('#refresh').addEventListener('click', refresh);

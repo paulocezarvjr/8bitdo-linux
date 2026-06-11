@@ -15,6 +15,19 @@
   --cap-edge:  #b0a890;
   --cap-ink:   #2b2822;
 
+  /* board chrome + accents (overridden by edition themes) */
+  --case-1:    #211d27;
+  --case-2:    #17141d;
+  --case-edge: #322c3c;
+  --knob-1:    #6a6478;
+  --knob-2:    #2c2836;
+  --led:       var(--green);
+  --mapped:    var(--red);
+  --ab-1:      #ff4d57;
+  --ab-2:      var(--red-deep);
+  --ab-edge:   #7d0911;
+  --ab-ink:    #fff;
+
   --u: clamp(34px, 4.4vw, 50px);   /* one key unit */
   --gap: 5px;
   --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, monospace;
@@ -119,14 +132,14 @@ main { flex: 1; display: flex; flex-direction: column; }
 .lg { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
 .sw { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
 .sw.default { background: var(--cap); }
-.sw.mapped  { background: var(--cap); box-shadow: inset 0 0 0 2px var(--red); }
-.sw.ab      { background: linear-gradient(var(--red), var(--red-deep)); }
+.sw.mapped  { background: var(--cap); box-shadow: inset 0 0 0 2px var(--mapped); }
+.sw.ab      { background: linear-gradient(var(--ab-1), var(--ab-2)); }
 
 /* keyboard case */
 .board-wrap { display: flex; justify-content: center; overflow-x: auto; padding: 6px; }
 .case {
-  background: linear-gradient(#211d27, #17141d);
-  border: 1px solid #322c3c; border-radius: 16px;
+  background: linear-gradient(var(--case-1), var(--case-2));
+  border: 1px solid var(--case-edge); border-radius: 16px;
   padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .case-top {
@@ -135,13 +148,13 @@ main { flex: 1; display: flex; flex-direction: column; }
 }
 .knob {
   width: 26px; height: 26px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #6a6478, #2c2836);
+  background: radial-gradient(circle at 35% 30%, var(--knob-1), var(--knob-2));
   box-shadow: inset 0 0 0 3px #15121b, 0 2px 4px rgba(0,0,0,.5);
   position: relative;
 }
 .knob::after { content:""; position:absolute; top:3px; left:50%; width:2px; height:8px; background:var(--amber); transform:translateX(-50%); border-radius:2px; }
-.brand-mini { font-size: 10px; letter-spacing: 3px; }
-.dot-led { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.brand-mini { font-size: 10px; letter-spacing: 3px; color: var(--plate-ink, inherit); }
+.dot-led { width: 9px; height: 9px; border-radius: 50%; background: var(--led); box-shadow: 0 0 8px var(--led); }
 
 /* no flex gap: spacing comes from each key's transparent border, so every row
    sums to exactly sum(width)*unit and columns line up across rows. */
@@ -173,21 +186,21 @@ main { flex: 1; display: flex; flex-direction: column; }
 /* remapped */
 .key.mapped {
   box-shadow: 0 3px 0 var(--cap-edge), 0 5px 7px rgba(0,0,0,0.45),
-              inset 0 0 0 2px var(--red), inset 0 1px 0 rgba(255,255,255,0.5);
+              inset 0 0 0 2px var(--mapped), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .key.mapped::after {
   content:""; position:absolute; top:5px; right:5px; width:6px; height:6px;
-  border-radius:50%; background: var(--red); box-shadow: 0 0 6px var(--red);
+  border-radius:50%; background: var(--mapped); box-shadow: 0 0 6px var(--mapped);
 }
 
 /* A / B keys */
 .key.ab {
-  background: linear-gradient(180deg, #ff4d57, var(--red-deep));
-  color: #fff; box-shadow: 0 3px 0 #7d0911, 0 5px 7px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  background: linear-gradient(180deg, var(--ab-1), var(--ab-2));
+  color: var(--ab-ink); box-shadow: 0 3px 0 var(--ab-edge), 0 5px 7px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .key.ab .legend { font-family: var(--pixel); font-size: 11px; }
 .key.ab .target { color: #ffe2a8; }
-.key.ab.mapped { box-shadow: 0 3px 0 #7d0911, 0 5px 7px rgba(0,0,0,0.5), inset 0 0 0 2px #fff; }
+.key.ab.mapped { box-shadow: 0 3px 0 var(--ab-edge), 0 5px 7px rgba(0,0,0,0.5), inset 0 0 0 2px #fff; }
 
 /* selected / listening */
 .key.listening {
@@ -246,7 +259,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   background: linear-gradient(180deg, var(--cap), var(--cap-2)); color: var(--cap-ink);
   box-shadow: 0 4px 0 var(--cap-edge), inset 0 1px 0 rgba(255,255,255,0.6);
 }
-.big-cap.ab { background: linear-gradient(180deg, #ff4d57, var(--red-deep)); color:#fff; font-family: var(--pixel); box-shadow: 0 4px 0 #7d0911; }
+.big-cap.ab { background: linear-gradient(180deg, var(--ab-1), var(--ab-2)); color: var(--ab-ink); font-family: var(--pixel); box-shadow: 0 4px 0 var(--ab-edge); }
 .panel-name { font-size: 20px; font-weight: 700; }
 .panel-now { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .panel-now b { color: var(--amber); }
@@ -269,6 +282,116 @@ main { flex: 1; display: flex; flex-direction: column; }
 }
 .chip:hover { filter: brightness(1.25); border-color: var(--red); }
 .chip.danger { color: var(--red); border-color: rgba(255,46,63,0.4); }
+
+/* ---------- theme picker ---------- */
+.themer { position: relative; }
+.theme-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px; display: grid; gap: 2px; min-width: 190px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+/* author display would override the UA's [hidden] — restate (see .panel) */
+.theme-menu[hidden] { display: none; }
+.titem {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: none; border-radius: 7px; background: none; color: var(--ink);
+  font-family: var(--mono); font-size: 12px; cursor: pointer; text-align: left;
+}
+.titem:hover { background: #262230; }
+.titem.active { box-shadow: inset 0 0 0 1px var(--red); }
+.titem .dots { display: flex; gap: 3px; }
+.titem .dots i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+
+/* ---------- edition themes ----------
+   A theme = a var block. Group plumbing below routes --mod/--arr/--esc vars
+   into the keycap vars for tagged keys; per-key quirks come after. */
+body[data-theme] :is(.key, .big-cap):is(.mod, .nav) {
+  --cap: var(--mod-1); --cap-2: var(--mod-2); --cap-edge: var(--mod-edge); --cap-ink: var(--mod-ink);
+}
+body[data-theme] :is(.key, .big-cap).arrow {
+  --cap: var(--arr-1); --cap-2: var(--arr-2); --cap-edge: var(--arr-edge); --cap-ink: var(--arr-ink);
+}
+body[data-theme] :is(.key, .big-cap).esc {
+  --cap: var(--esc-1); --cap-2: var(--esc-2); --cap-edge: var(--esc-edge); --cap-ink: var(--esc-ink);
+}
+body[data-theme] .key .target { color: var(--mapped); }
+
+/* N Edition — NES: warm greige case, charcoal mods, red Esc/B/A, red legends */
+body[data-theme="n"] {
+  --case-1: #dad3c5; --case-2: #c0b8a8; --case-edge: #a59c8a; --plate-ink: #b3362e;
+  --knob-1: #45444e; --knob-2: #26252c; --led: #e84b3c; --mapped: var(--amber);
+  --cap: #ece7da; --cap-2: #dcd5c4; --cap-edge: #aca38e; --cap-ink: #c2453c;
+  --mod-1: #53525e; --mod-2: #434250; --mod-edge: #2d2c36; --mod-ink: #d8a195;
+  --arr-1: #53525e; --arr-2: #434250; --arr-edge: #2d2c36; --arr-ink: #e6ddd0;
+  --esc-1: #c8403a; --esc-2: #a72f2b; --esc-edge: #7c201d; --esc-ink: #f6e9e6;
+  --ab-1: #dd4136; --ab-2: #b22b22; --ab-edge: #7e1a13; --ab-ink: #fff;
+}
+/* N quirks: F9-F12 are charcoal, Enter is a light cap */
+body[data-theme="n"] .key:is([data-hw="f9"], [data-hw="f10"], [data-hw="f11"], [data-hw="f12"]) {
+  --cap: var(--mod-1); --cap-2: var(--mod-2); --cap-edge: var(--mod-edge); --cap-ink: var(--mod-ink);
+}
+body[data-theme="n"] .key[data-hw="enter"] {
+  --cap: #ece7da; --cap-2: #dcd5c4; --cap-edge: #aca38e; --cap-ink: #c2453c;
+}
+
+/* Fami Edition — Famicom: cream case, maroon mods, black arrows + Ⓐ, gold trim */
+body[data-theme="fami"] {
+  --case-1: #efe7d6; --case-2: #ddd2bb; --case-edge: #c5b89c; --plate-ink: #dcae55;
+  --knob-1: #3a3635; --knob-2: #1d1b1a; --led: #e74c3c; --mapped: var(--amber);
+  --cap: #f4edde; --cap-2: #e6dcc6; --cap-edge: #bfb398; --cap-ink: #8e3038;
+  --mod-1: #7c2b33; --mod-2: #65232a; --mod-edge: #471317; --mod-ink: #f0e2d8;
+  --arr-1: #312c2a; --arr-2: #221f1e; --arr-edge: #100f0e; --arr-ink: #efe7d6;
+  --esc-1: #7c2b33; --esc-2: #65232a; --esc-edge: #471317; --esc-ink: #f0e2d8;
+  --ab-1: #8e333b; --ab-2: #6d242b; --ab-edge: #471317; --ab-ink: #fff;
+}
+body[data-theme="fami"] .brand-mini {
+  background: #7c2b33; padding: 3px 9px; border-radius: 3px;
+}
+/* Fami quirk: the Ⓐ key is black like the arrows */
+body[data-theme="fami"] .key.ab[data-hw="menu"] {
+  --ab-1: #35302d; --ab-2: #211e1c; --ab-edge: #0e0d0c; --ab-ink: #efe7d6;
+}
+
+/* C64 Edition — breadbin: tan case, chocolate alphas, taupe mods, tan Esc/arrows */
+body[data-theme="c64"] {
+  --case-1: #cfc1a5; --case-2: #b8aa8d; --case-edge: #998c70; --plate-ink: #5d5142;
+  --knob-1: #e6dabb; --knob-2: #b9ab8a; --led: #e84b3c; --mapped: var(--amber);
+  --cap: #41382d; --cap-2: #332b22; --cap-edge: #1f1a14; --cap-ink: #f1e9d6;
+  --mod-1: #6e655a; --mod-2: #5b5349; --mod-edge: #3a342c; --mod-ink: #f1e9d6;
+  --arr-1: #ddd0b2; --arr-2: #c9bb9c; --arr-edge: #a3957a; --arr-ink: #41382d;
+  --esc-1: #ddd0b2; --esc-2: #c9bb9c; --esc-edge: #a3957a; --esc-ink: #41382d;
+  --ab-1: #6e655a; --ab-2: #5b5349; --ab-edge: #3a342c; --ab-ink: #f1e9d6;
+}
+/* C64 quirks: F-row matches the mods; rainbow badge by the branding */
+body[data-theme="c64"] :is(.key, .big-cap).frow {
+  --cap: var(--mod-1); --cap-2: var(--mod-2); --cap-edge: var(--mod-edge); --cap-ink: var(--mod-ink);
+}
+body[data-theme="c64"] .brand-mini::before {
+  content: ""; display: inline-block; width: 26px; height: 9px; margin-right: 8px;
+  border-radius: 2px; vertical-align: -1px;
+  background: linear-gradient(180deg,
+    #d4382e 0 20%, #e67e22 20% 40%, #f1c40f 40% 60%, #2e9e4f 60% 80%, #2d6fb0 80% 100%);
+}
+
+/* Xbox Edition — translucent jade green, lime legends, XYAB-colored arrows */
+body[data-theme="xbox"] {
+  --case-1: #3c511b; --case-2: #2c3d14; --case-edge: #557a24; --plate-ink: #c4e84f;
+  --knob-1: #2f4214; --knob-2: #1c2a0c; --led: #76e64c; --mapped: #ffd84d;
+  --cap: #5f8424; --cap-2: #4d6b1e; --cap-edge: #324a12; --cap-ink: #d9f25e;
+  --mod-1: #46641c; --mod-2: #385216; --mod-edge: #243a0e; --mod-ink: #c4e84f;
+  --arr-1: #46641c; --arr-2: #385216; --arr-edge: #243a0e; --arr-ink: #c4e84f;
+  --esc-1: #46641c; --esc-2: #385216; --esc-edge: #243a0e; --esc-ink: #c4e84f;
+  --ab-1: #46641c; --ab-2: #385216; --ab-edge: #243a0e; --ab-ink: #c4e84f;
+}
+/* Xbox quirks: F-row darker; arrows in the Y/X/A/B button colors */
+body[data-theme="xbox"] :is(.key, .big-cap).frow {
+  --cap: var(--mod-1); --cap-2: var(--mod-2); --cap-edge: var(--mod-edge); --cap-ink: var(--mod-ink);
+}
+body[data-theme="xbox"] .key[data-hw="up"]    { --cap: #f2b705; --cap-2: #d49d04; --cap-edge: #966e02; --cap-ink: #4a3a00; }
+body[data-theme="xbox"] .key[data-hw="left"]  { --cap: #2a6fd6; --cap-2: #2159ad; --cap-edge: #163d78; --cap-ink: #eaf2ff; }
+body[data-theme="xbox"] .key[data-hw="down"]  { --cap: #43a047; --cap-2: #35813a; --cap-edge: #225626; --cap-ink: #eaffe9; }
+body[data-theme="xbox"] .key[data-hw="right"] { --cap: #d8392e; --cap-2: #b02b22; --cap-edge: #7c1c15; --cap-ink: #ffe9e7; }
 
 /* ---------- log ---------- */
 .logwrap { position: fixed; left: 14px; bottom: 12px; z-index: 15; width: min(440px, 90vw); }
