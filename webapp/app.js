@@ -164,7 +164,23 @@ function selectKey(item) {
   $('#panelNow').innerHTML = cur ? `currently → <b>${cur.target}</b>` : 'currently → default';
   $('#listenText').textContent = 'Press any key to assign…';
   $('#panel').hidden = false;
-  startListening();
+  expandPanel();
+}
+
+/* collapse to a slim bar so the board behind stays visible; pause listening so
+   keypresses don't assign while the user is just looking at the board. */
+function collapsePanel() {
+  stopListening();
+  $('#panel').classList.add('collapsed');
+  $('#panelToggle').setAttribute('aria-label', 'expand panel');
+}
+function expandPanel() {
+  $('#panel').classList.remove('collapsed');
+  $('#panelToggle').setAttribute('aria-label', 'minimize panel');
+  if (selected && !listening) {
+    $('#listenText').textContent = 'Press any key to assign…';
+    startListening();
+  }
 }
 
 function startListening() {
@@ -254,6 +270,7 @@ async function doAction(action) {
 function closePanel() {
   stopListening();
   $('#panel').hidden = true;
+  $('#panel').classList.remove('collapsed');
   document.querySelectorAll('.key.listening').forEach((e) => e.classList.remove('listening'));
   selected = null;
 }
@@ -286,7 +303,14 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#connect').addEventListener('click', connect);
   $('#connect2').addEventListener('click', connect);
   $('#refresh').addEventListener('click', refresh);
-  $('#panelClose').addEventListener('click', closePanel);
+  $('#panelToggle').addEventListener('click', (e) => {
+    e.stopPropagation();   // the panel's own click handler would re-expand
+    if ($('#panel').classList.contains('collapsed')) expandPanel();
+    else collapsePanel();
+  });
+  $('.panel-inner').addEventListener('click', () => {
+    if ($('#panel').classList.contains('collapsed')) expandPanel();
+  });
   $('#logToggle').addEventListener('click', () => {
     const l = $('#log'); l.hidden = !l.hidden;
     $('#logToggle').textContent = (l.hidden ? '› ' : '⌄ ') + 'log';

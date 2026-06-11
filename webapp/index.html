@@ -71,7 +71,7 @@
   <!-- remap panel -->
   <div id="panel" class="panel" hidden>
     <div class="panel-inner">
-      <button class="panel-close" id="panelClose" aria-label="cancel">✕</button>
+      <button class="panel-toggle" id="panelToggle" aria-label="minimize panel">⌄</button>
       <div class="panel-key">
         <div class="big-cap" id="panelCap">B</div>
         <div class="panel-meta">
@@ -81,25 +81,27 @@
         </div>
       </div>
 
-      <div class="listen" id="listen">
-        <span class="rec"></span>
-        <span id="listenText">Press any key to assign…</span>
-      </div>
+      <div class="panel-body">
+        <div class="listen" id="listen">
+          <span class="rec"></span>
+          <span id="listenText">Press any key to assign…</span>
+        </div>
 
-      <div class="quick">
-        <div class="quick-group">
-          <span class="quick-label">Media</span>
-          <div class="chips" id="mediaChips"></div>
-        </div>
-        <div class="quick-group">
-          <span class="quick-label">Mouse</span>
-          <div class="chips" id="mouseChips"></div>
-        </div>
-        <div class="quick-group">
-          <span class="quick-label">Actions</span>
-          <div class="chips">
-            <button class="chip danger" data-action="disable">Disable</button>
-            <button class="chip" data-action="reset">Reset to default</button>
+        <div class="quick">
+          <div class="quick-group">
+            <span class="quick-label">Media</span>
+            <div class="chips" id="mediaChips"></div>
+          </div>
+          <div class="quick-group">
+            <span class="quick-label">Mouse</span>
+            <div class="chips" id="mouseChips"></div>
+          </div>
+          <div class="quick-group">
+            <span class="quick-label">Actions</span>
+            <div class="chips">
+              <button class="chip danger" data-action="disable">Disable</button>
+              <button class="chip" data-action="reset">Reset to default</button>
+            </div>
           </div>
         </div>
       </div>
