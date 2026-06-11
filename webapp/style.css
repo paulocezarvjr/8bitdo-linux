@@ -21,6 +21,9 @@
   --case-edge: #322c3c;
   --knob-1:    #6a6478;
   --knob-2:    #2c2836;
+  --cbtn:      #322e3d;
+  --vent-bg:   #1c1923;
+  --vent-line: rgba(255,255,255,0.07);
   --led:       var(--green);
   --mapped:    var(--red);
   --ab-1:      #ff4d57;
@@ -146,6 +149,20 @@ main { flex: 1; display: flex; flex-direction: column; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 2px 8px 14px; color: var(--muted);
 }
+.cluster { display: flex; align-items: center; gap: 8px; }
+.cbtn {
+  width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+  background: var(--cbtn);
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.45), 0 1px 1px rgba(255,255,255,0.08);
+}
+.cluster .cbtn:first-of-type { margin-left: 6px; }
+/* vent grille — the striped strip on the real top plate */
+.vents {
+  width: clamp(80px, 14vw, 170px); height: 16px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg,
+    var(--vent-line) 0 3px, transparent 3px 9px), var(--vent-bg);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.25);
+}
 .knob {
   width: 26px; height: 26px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, var(--knob-1), var(--knob-2));
@@ -170,16 +187,21 @@ main { flex: 1; display: flex; flex-direction: column; }
   color: var(--cap-ink);
   box-shadow: 0 3px 0 var(--cap-edge), 0 5px 7px rgba(0,0,0,0.45),
               inset 0 1px 0 rgba(255,255,255,0.6);
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
   padding: 5px 7px; overflow: hidden;
   transition: transform .06s, box-shadow .12s, filter .12s;
 }
+/* real-board legend alignment: centered, except Tab/left Shift (left) and
+   Enter/right Shift (right) */
+.key[data-hw="tab"], .key[data-hw="leftshift"] { align-items: flex-start; }
+.key[data-hw="enter"], .key[data-hw="rightshift"] { align-items: flex-end; }
 .key:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--cap-edge), 0 9px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6); }
 .key:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--cap-edge), 0 2px 4px rgba(0,0,0,0.4); }
 .key .legend { font-size: clamp(9px, 1.4vw, 12px); font-weight: 700; line-height: 1; }
 .key .target {
+  position: absolute; right: 6px; bottom: 3px;
   font-size: 9px; font-weight: 700; color: var(--red-deep);
-  align-self: flex-end; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: calc(100% - 10px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .spacer { flex: 0 0 auto; }
 
@@ -317,28 +339,27 @@ body[data-theme] :is(.key, .big-cap).esc {
 }
 body[data-theme] .key .target { color: var(--mapped); }
 
-/* N Edition — NES: warm greige case, charcoal mods, red Esc/B/A, red legends */
+/* N Edition — NES: warm greige case, charcoal mods, red Esc/B/A, red legends.
+   Owner-verified details: F9-F12 are plain light caps, Enter is dark, and the
+   legend red is the SAME red on light and dark caps. */
 body[data-theme="n"] {
   --case-1: #dad3c5; --case-2: #c0b8a8; --case-edge: #a59c8a; --plate-ink: #b3362e;
-  --knob-1: #45444e; --knob-2: #26252c; --led: #e84b3c; --mapped: var(--amber);
+  --knob-1: #45444e; --knob-2: #26252c; --cbtn: #6a6975;
+  --vent-bg: #a59c8b; --vent-line: #ece7da;
+  --led: #e84b3c; --mapped: var(--amber);
   --cap: #ece7da; --cap-2: #dcd5c4; --cap-edge: #aca38e; --cap-ink: #c2453c;
-  --mod-1: #53525e; --mod-2: #434250; --mod-edge: #2d2c36; --mod-ink: #d8a195;
-  --arr-1: #53525e; --arr-2: #434250; --arr-edge: #2d2c36; --arr-ink: #e6ddd0;
+  --mod-1: #53525e; --mod-2: #434250; --mod-edge: #2d2c36; --mod-ink: #c2453c;
+  --arr-1: #53525e; --arr-2: #434250; --arr-edge: #2d2c36; --arr-ink: #c2453c;
   --esc-1: #c8403a; --esc-2: #a72f2b; --esc-edge: #7c201d; --esc-ink: #f6e9e6;
   --ab-1: #dd4136; --ab-2: #b22b22; --ab-edge: #7e1a13; --ab-ink: #fff;
-}
-/* N quirks: F9-F12 are charcoal, Enter is a light cap */
-body[data-theme="n"] .key:is([data-hw="f9"], [data-hw="f10"], [data-hw="f11"], [data-hw="f12"]) {
-  --cap: var(--mod-1); --cap-2: var(--mod-2); --cap-edge: var(--mod-edge); --cap-ink: var(--mod-ink);
-}
-body[data-theme="n"] .key[data-hw="enter"] {
-  --cap: #ece7da; --cap-2: #dcd5c4; --cap-edge: #aca38e; --cap-ink: #c2453c;
 }
 
 /* Fami Edition — Famicom: cream case, maroon mods, black arrows + Ⓐ, gold trim */
 body[data-theme="fami"] {
   --case-1: #efe7d6; --case-2: #ddd2bb; --case-edge: #c5b89c; --plate-ink: #dcae55;
-  --knob-1: #3a3635; --knob-2: #1d1b1a; --led: #e74c3c; --mapped: var(--amber);
+  --knob-1: #3a3635; --knob-2: #1d1b1a; --cbtn: #3f3a38;
+  --vent-bg: #6b2229; --vent-line: #d8cfc0;
+  --led: #e74c3c; --mapped: var(--amber);
   --cap: #f4edde; --cap-2: #e6dcc6; --cap-edge: #bfb398; --cap-ink: #8e3038;
   --mod-1: #7c2b33; --mod-2: #65232a; --mod-edge: #471317; --mod-ink: #f0e2d8;
   --arr-1: #312c2a; --arr-2: #221f1e; --arr-edge: #100f0e; --arr-ink: #efe7d6;
@@ -356,7 +377,9 @@ body[data-theme="fami"] .key.ab[data-hw="menu"] {
 /* C64 Edition — breadbin: tan case, chocolate alphas, taupe mods, tan Esc/arrows */
 body[data-theme="c64"] {
   --case-1: #cfc1a5; --case-2: #b8aa8d; --case-edge: #998c70; --plate-ink: #5d5142;
-  --knob-1: #e6dabb; --knob-2: #b9ab8a; --led: #e84b3c; --mapped: var(--amber);
+  --knob-1: #e6dabb; --knob-2: #b9ab8a; --cbtn: #d8cbab;
+  --vent-bg: #b6a784; --vent-line: #8a7c5f;
+  --led: #e84b3c; --mapped: var(--amber);
   --cap: #41382d; --cap-2: #332b22; --cap-edge: #1f1a14; --cap-ink: #f1e9d6;
   --mod-1: #6e655a; --mod-2: #5b5349; --mod-edge: #3a342c; --mod-ink: #f1e9d6;
   --arr-1: #ddd0b2; --arr-2: #c9bb9c; --arr-edge: #a3957a; --arr-ink: #41382d;
@@ -377,7 +400,9 @@ body[data-theme="c64"] .brand-mini::before {
 /* Xbox Edition — translucent jade green, lime legends, XYAB-colored arrows */
 body[data-theme="xbox"] {
   --case-1: #3c511b; --case-2: #2c3d14; --case-edge: #557a24; --plate-ink: #c4e84f;
-  --knob-1: #2f4214; --knob-2: #1c2a0c; --led: #76e64c; --mapped: #ffd84d;
+  --knob-1: #2f4214; --knob-2: #1c2a0c; --cbtn: #3a5418;
+  --vent-bg: #243410; --vent-line: #79a032;
+  --led: #76e64c; --mapped: #ffd84d;
   --cap: #5f8424; --cap-2: #4d6b1e; --cap-edge: #324a12; --cap-ink: #d9f25e;
   --mod-1: #46641c; --mod-2: #385216; --mod-edge: #243a0e; --mod-ink: #c4e84f;
   --arr-1: #46641c; --arr-2: #385216; --arr-edge: #243a0e; --arr-ink: #c4e84f;

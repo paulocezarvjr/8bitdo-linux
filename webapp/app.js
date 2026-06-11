@@ -19,7 +19,7 @@ const LAYOUT = [
 
   [k('grave', '`'), k('1', '1'), k('2', '2'), k('3', '3'), k('4', '4'), k('5', '5'),
    k('6', '6'), k('7', '7'), k('8', '8'), k('9', '9'), k('0', '0'),
-   k('minus', '-'), k('equal', '='), k('backspace', '⌫', 2, 'mod'), sp(0.5),
+   k('minus', '-'), k('equal', '='), k('backspace', 'Backspace', 2, 'mod'), sp(0.5),
    k('insert', 'Ins', 1, 'nav'), k('home', 'Home', 1, 'nav'), k('pageup', 'PgUp', 1, 'nav')],
 
   [k('tab', 'Tab', 1.5, 'mod'), k('q', 'Q'), k('w', 'W'), k('e', 'E'), k('r', 'R'), k('t', 'T'),
