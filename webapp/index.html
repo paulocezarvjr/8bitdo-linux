@@ -135,6 +135,9 @@
     runs entirely in your browser, on your hardware.
   </footer>
 
+  <!-- DEV-ONLY (not committed): ?mock loads an in-memory fake keyboard so the
+       board/UI is reachable without hardware, for screenshots. No-op otherwise. -->
+  <script type="module">if (new URLSearchParams(location.search).has('mock')) import('./mock.js');</script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
