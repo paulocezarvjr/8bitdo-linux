@@ -9,6 +9,27 @@ protocol.
 > Interoperability work on hardware I own. The HID protocol is reverse engineered
 > from captures of the official software's traffic.
 
+## The configurator
+
+A no-install browser app (WebHID) for the Retro Mechanical Keyboard — click a
+key, then press what you want it to become. The same read/remap protocol as the
+Python tools, running entirely in the browser.
+
+![The 8BitDo Keymap WebHID configurator — a rendered TKL board with remaps highlighted](docs/screenshots/configurator.png)
+
+The rendered board reskins to match your edition (palettes taken from the
+official product shots):
+
+| N Edition | Fami Edition |
+|:---:|:---:|
+| ![N Edition](docs/screenshots/edition-n.png) | ![Fami Edition](docs/screenshots/edition-fami.png) |
+
+| C64 Edition | Xbox Edition |
+|:---:|:---:|
+| ![C64 Edition](docs/screenshots/edition-c64.png) | ![Xbox Edition](docs/screenshots/edition-xbox.png) |
+
+See [`webapp/README.md`](webapp/README.md) to run it.
+
 ## Devices (USB vendor `2dc8`)
 
 | Device | PID | Receiver/Adapter | Status |
