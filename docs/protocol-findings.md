@@ -168,16 +168,40 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
 `references/8bitdo-spec/Pro2/config.hexpat`.
 
 ### Pending for WRITE (careful — destructive)
-- Recompute **CRC16** (the function exists in the dll; see spec) before writing.
 - Write sequence: `0x0001` (write) per chunk → `0x2106` (finish).
 - Validate first by doing read → write of the same blob (idempotent) before
-  changing anything.
+  changing anything. **No-op write verified on hardware (37/37 acks).**
+
+### CRC16 — reversed from 8BitDoAdvance.dll (`_ANSI_CRC_16_Ultimate2_4` etc.)
+The DLL's `ANSI_CRC_16_*` wrappers all call one shared core (sub at 0x10407130)
+that is plain **CRC-16/MODBUS**: init `0xFFFF`, reflected poly `0xA001`
+(= 0x8005 reflected), refin/refout true, xorout `0x0000` (confirmed: the
+2-entry table at `.data` 0x10c400a8 is `[0x0000, 0xA001]`).
+
+```python
+def crc16(data):            # CRC-16/MODBUS
+    c = 0xFFFF
+    for b in data:
+        c ^= b
+        for _ in range(8):
+            c = (c >> 1) ^ 0xA001 if (c & 1) else c >> 1
+    return c
+```
+
+The managed code computes it as: zero the record's `crc_value` field, then
+`crc_value = crc16(whole record)`. **This belongs to the newer "Advance2"
+record** (e.g. `Ultimate2_4Advance2`, ~2324-byte struct). The OLD Pro2-style
+blob that `ctl_read/ctl_write` use (1652 B at base 0x0674) has **no** such CRC —
+scanning `captures/ctl-config.bin` finds no CRC-16/MODBUS match in any
+placement, matching the no-op-write result. So which protocol a given unit
+speaks decides whether the CRC is needed; confirm by reading the device.
 
 ## Next steps
 
 - [x] Controller: read config via OUT `0x81` / IN `0x02` (read-only). **Done.**
 - [ ] Controller: full block parser (port `config.hexpat` to Python).
-- [ ] Controller: figure out/implement CRC16 to enable safe writes.
+- [x] Controller: CRC16 reversed — it's **CRC-16/MODBUS** (for the newer
+      Advance2 record; the old 1652 B blob has no checksum). See above.
 - [x] Keyboard: read profile + mappings over hidraw (read-only). **Done.**
 - [x] Keyboard: write/remap on Linux, **verified on hardware** (B/`0x6c` ->
       capslock types Caps Lock with the profile engaged via the 8BitDo key).
