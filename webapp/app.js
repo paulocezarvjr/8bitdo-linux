@@ -287,10 +287,23 @@ async function doAction(action) {
 }
 
 /* ---------- macros (software / profile layer) ---------- */
+/* USAGE encodes a 3-byte keyboard usage (page 0x07 | 16-bit id, big-endian).
+   Ordinary keys keep the id in the low byte ('a' = 0x070004), but modifiers
+   keep it in the high byte (leftctrl = 0x07e000 => 0xE0). The macro step wants
+   the plain HID id (a=0x04, leftctrl=0xE0), so take whichever byte is non-zero. */
+function hidUsageId(name) {
+  const u = USAGE[name];
+  if (u === undefined || (u >> 16) !== 0x07) return null;
+  const u16 = u & 0xffff;
+  const id = (u16 & 0xff) || (u16 >> 8);
+  return id || null;
+}
+
 const KBD_USAGE_BY_LOW = (() => {
   const m = {};
-  for (const [name, u] of Object.entries(USAGE)) {
-    if ((u >> 16) === 0x07) { const low = u & 0xff; if (!(low in m)) m[low] = name; }
+  for (const name of Object.keys(USAGE)) {
+    const id = hidUsageId(name);
+    if (id && !(id in m)) m[id] = name;
   }
   return m;
 })();
@@ -299,9 +312,8 @@ const KBD_USAGE_BY_LOW = (() => {
 function eventKbdUsage(code) {
   const name = CODE_TO_NAME[code];
   if (name === undefined) return null;
-  const u = USAGE[name];
-  if (u === undefined || (u >> 16) !== 0x07) return null;
-  return { usage: u & 0xff, name };
+  const id = hidUsageId(name);
+  return id ? { usage: id, name } : null;
 }
 
 function stepText(s) {
