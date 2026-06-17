@@ -316,10 +316,16 @@ function eventKbdUsage(code) {
   return id ? { usage: id, name } : null;
 }
 
+/* modifier usages (LCtrl..RWin) use macro step type 0x83/0x03, ordinary keys
+   use 0x81/0x01 — the firmware needs the modifier bit, not a plain keycode. */
+const isModifierUsage = (u) => u >= 0xe0 && u <= 0xe7;
+const stepDownType = (u) => (isModifierUsage(u) ? 0x83 : 0x81);
+const stepUpType = (u) => (isModifierUsage(u) ? 0x03 : 0x01);
+
 function stepText(s) {
   if (s.type === 0x0f) return `⏱${s.usage | ((s.hi || 0) << 8)}ms`;
   const nm = KBD_USAGE_BY_LOW[s.usage] || ('0x' + s.usage.toString(16));
-  return nm + (s.type === 0x81 ? '↓' : '↑');
+  return nm + (s.type === 0x81 || s.type === 0x83 ? '↓' : '↑');
 }
 
 async function updateMacroUI() {
@@ -370,13 +376,13 @@ function onMacroKeydown(e) {
   if (e.code === 'Escape') { endMacroRec(); startListening(); updateMacroUI(); return; }
   if (e.repeat) return;
   const u = eventKbdUsage(e.code);
-  if (u) { macroRec.push({ type: 0x81, usage: u.usage }); renderMacroSteps(); }
+  if (u) { macroRec.push({ type: stepDownType(u.usage), usage: u.usage }); renderMacroSteps(); }
 }
 function onMacroKeyup(e) {
   if (!macroRec || e.code === 'Escape') return;
   e.preventDefault(); e.stopPropagation();
   const u = eventKbdUsage(e.code);
-  if (u) { macroRec.push({ type: 0x01, usage: u.usage }); renderMacroSteps(); }
+  if (u) { macroRec.push({ type: stepUpType(u.usage), usage: u.usage }); renderMacroSteps(); }
 }
 
 function renderMacroSteps() {

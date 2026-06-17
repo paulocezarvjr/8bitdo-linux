@@ -218,7 +218,16 @@ between write and read, and may span multiple chunks.
 |---|---|
 | key **down** | `81 <hid_usage> 00` |
 | key **up**   | `01 <hid_usage> 00` |
+| **modifier down** (Ctrl/Shift/Alt/Win, usage 0xe0–0xe7) | `83 <hid_usage> 00` |
+| **modifier up** | `03 <hid_usage> 00` |
 | **delay**    | `0F <ms_lo> <ms_hi>` (u16 LE) |
+
+Modifiers MUST use type `0x83`/`0x03` (not `0x81`/`0x01`) so the firmware sets the
+modifier bit instead of emitting a plain keycode the host ignores. A full save
+must be wrapped to commit, or the key won't fire the macro:
+`SwitchReport(0xff)` = ATTN (`52 76 ff`) → `writeMacroName` (`52 74 …`) →
+`writeMacro` steps (`52 76 …`) → `SwitchReport(0xa5)` = finalize (`52 76 a5`,
+the same MAP_DONE the remap path uses).
 
 `num_event` (the u16 after the type byte) = the HID usage for down/up, or the ms
 for a delay. Steps are concatenated (`getbuffer`), terminated by action `Null`.

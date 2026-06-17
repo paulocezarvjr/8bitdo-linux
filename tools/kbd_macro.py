@@ -33,9 +33,15 @@ sys.path.insert(0, os.path.join(HERE, "..", "references", "8bitdo-kbd-mapper", "
 import keys  # type: ignore  # noqa: E402
 
 # --- macro step opcodes (byte 0 of each 3-byte step) ---
+# ordinary keys use 0x81/0x01; modifiers (LCtrl..RWin, usage 0xe0-0xe7) use
+# 0x83/0x03 so the firmware sets the modifier bit instead of a plain keycode.
 OP_UP = 0x01
 OP_TIME = 0x0F
 OP_DOWN = 0x81
+OP_MOD_UP = 0x03
+OP_MOD_DOWN = 0x83
+MOD_NAMES = {0xe0: 'lctrl', 0xe1: 'lshift', 0xe2: 'lalt', 0xe3: 'lwin',
+             0xe4: 'rctrl', 0xe5: 'rshift', 0xe6: 'ralt', 0xe7: 'rwin'}
 
 # minimal printable-ASCII -> HID usage map for building macros from text
 SHIFT = 0xE1  # left shift usage, for capitals / shifted symbols
@@ -127,9 +133,9 @@ def decode_steps(step_bytes):
             break
         if t == OP_TIME:
             out.append(f"delay {a | (step_bytes[i + 2] << 8)}ms")
-        elif t in (OP_DOWN, OP_UP):
-            ch = USAGE_CHAR.get(a, f"0x{a:02x}")
-            out.append(ch + ("↓" if t == OP_DOWN else "↑"))
+        elif t in (OP_DOWN, OP_UP, OP_MOD_DOWN, OP_MOD_UP):
+            ch = MOD_NAMES.get(a) or USAGE_CHAR.get(a, f"0x{a:02x}")
+            out.append(ch + ("↓" if t in (OP_DOWN, OP_MOD_DOWN) else "↑"))
         else:
             out.append(f"?{t:02x}{a:02x}")
     return out
@@ -166,10 +172,10 @@ def steps_from_text(text):
         if usage is None:
             raise ValueError(f"no HID usage for {ch!r}")
         if shifted:
-            out += bytes([OP_DOWN, SHIFT, 0x00])
+            out += bytes([OP_MOD_DOWN, SHIFT, 0x00])
         out += bytes([OP_DOWN, usage, 0x00, OP_UP, usage, 0x00])
         if shifted:
-            out += bytes([OP_UP, SHIFT, 0x00])
+            out += bytes([OP_MOD_UP, SHIFT, 0x00])
     return bytes(out)
 
 
