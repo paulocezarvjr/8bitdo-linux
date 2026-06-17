@@ -23,7 +23,14 @@ python3 -m http.server 8000
    Disable / Reset to default). `Esc` cancels.
 4. Remaps are written to the on-keyboard **profile** — press the **8BitDo key** on
    the keyboard to activate that profile and see them live.
-5. The **⌨ theme** button skins the rendered board to match your edition
+5. **Macros:** click a key, then in the panel's **Macro** section hit **⏺ Record
+   macro**, type the sequence (each press/release is captured as a step), and
+   **✓ Save to key** — or **Clear macro** to remove it. Keys with a macro show a
+   ★. Macros live in the **software/profile** layer (active when the profile is
+   engaged via the 8BitDo key), the same store the official Ultimate Software V2
+   uses — distinct from the on-board ★ star/base layer. Protocol reversed from
+   US V2; see `docs/protocol-findings.md`.
+6. The **⌨ theme** button skins the rendered board to match your edition
    (N, Fami, C64, Xbox — palettes taken from the official product shots); the
    choice persists in the browser. Adding an edition is one CSS var block in
    `style.css` plus one entry in `THEMES` in `app.js`.
@@ -49,5 +56,8 @@ the vendor collection (Usage Page `0x008C`), not the keyboard collection.
 Keyboard read + remap **verified in-browser** against the device (Chrome): reads
 the profile + current maps, and remaps reliably (resends MAP until the ack byte
 is `0x08`). UI is a rendered TKL keyboard — click a key, press the target to
-assign (capture via `keydown`), with a panel for media/mouse/disable/reset.
+assign (capture via `keydown`), with a panel for media/mouse/disable/reset and a
+macro editor. Software macros (read/write/clear) are implemented and the byte
+construction is verified end-to-end (headless Chrome + fake HID) against the
+hardware-validated CLI protocol.
 Next ideas: profile management, macros, controller support.

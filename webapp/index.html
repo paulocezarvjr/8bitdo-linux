@@ -113,6 +113,17 @@
             <div class="chips" id="mouseChips"></div>
           </div>
           <div class="quick-group">
+            <span class="quick-label">Macro <small>· profile layer (8BitDo key)</small></span>
+            <div id="macroCurrent" class="macro-current"></div>
+            <div id="macroSteps" class="macro-steps" hidden></div>
+            <div class="chips">
+              <button class="chip" id="macroRec">⏺ Record macro</button>
+              <button class="chip" id="macroSave" hidden>✓ Save to key</button>
+              <button class="chip" id="macroCancel" hidden>Cancel</button>
+              <button class="chip danger" id="macroClear" hidden>Clear macro</button>
+            </div>
+          </div>
+          <div class="quick-group">
             <span class="quick-label">Actions</span>
             <div class="chips">
               <button class="chip danger" data-action="disable">Disable</button>

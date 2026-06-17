@@ -88,6 +88,8 @@ let mappings = new Map();   // hwcode -> { usageInt, target }
 let selected = null;        // { hw, code, lbl, cls }
 let listening = false;
 let pendingMod = null;      // code of a lone modifier held while listening
+let macroKeys = new Set();  // hwcodes that carry a software macro
+let macroRec = null;        // null = not recording; else array of {type,usage,label}
 
 /* ---------- helpers ---------- */
 function log(msg) {
@@ -120,8 +122,9 @@ async function refresh() {
   const { profile, maps } = await kbd.readAll();
   $('#profile').textContent = profile === null ? '(none)' : profile;
   mappings = new Map(maps.map((m) => [m.code, { usageInt: m.usage, target: m.target }]));
+  try { macroKeys = new Set(await kbd.getMacroKeys()); } catch { macroKeys = new Set(); }
   paintMappings();
-  log(`read: profile=${profile} maps=${maps.length}`);
+  log(`read: profile=${profile} maps=${maps.length} macros=${macroKeys.size}`);
 }
 
 /* ---------- render ---------- */
@@ -160,6 +163,7 @@ function paintMappings() {
       el.classList.remove('mapped');
       tEl.textContent = '';
     }
+    el.classList.toggle('has-macro', macroKeys.has(code));
   }
 }
 
@@ -179,6 +183,7 @@ function selectKey(item) {
   $('#listenText').textContent = 'Press any key to assign…';
   $('#panel').hidden = false;
   expandPanel();
+  updateMacroUI();
 }
 
 /* collapse to a slim bar so the board behind stays visible; pause listening so
@@ -281,7 +286,128 @@ async function doAction(action) {
   }
 }
 
+/* ---------- macros (software / profile layer) ---------- */
+const KBD_USAGE_BY_LOW = (() => {
+  const m = {};
+  for (const [name, u] of Object.entries(USAGE)) {
+    if ((u >> 16) === 0x07) { const low = u & 0xff; if (!(low in m)) m[low] = name; }
+  }
+  return m;
+})();
+
+/* a recordable macro step uses only keyboard-page (0x07) usages */
+function eventKbdUsage(code) {
+  const name = CODE_TO_NAME[code];
+  if (name === undefined) return null;
+  const u = USAGE[name];
+  if (u === undefined || (u >> 16) !== 0x07) return null;
+  return { usage: u & 0xff, name };
+}
+
+function stepText(s) {
+  if (s.type === 0x0f) return `⏱${s.usage | ((s.hi || 0) << 8)}ms`;
+  const nm = KBD_USAGE_BY_LOW[s.usage] || ('0x' + s.usage.toString(16));
+  return nm + (s.type === 0x81 ? '↓' : '↑');
+}
+
+async function updateMacroUI() {
+  const cur = $('#macroCurrent');
+  if (!selected) { cur.textContent = ''; return; }
+  if (macroRec) return;                       // recording: keep the live view
+  const has = macroKeys.has(selected.code);
+  $('#macroClear').hidden = !has;
+  $('#macroSteps').hidden = true;
+  if (!has) { cur.textContent = 'no macro on this key'; return; }
+  cur.textContent = 'reading…';
+  try {
+    const m = await kbd.getMacroSteps(selected.code);
+    cur.textContent = (m && m.steps.length)
+      ? 'macro: ' + m.steps.map(stepText).join(' ')
+      : 'macro set';
+  } catch { cur.textContent = 'macro set'; }
+}
+
+function startMacroRec() {
+  if (!selected) return;
+  stopListening();
+  macroRec = [];
+  $('#macroRec').hidden = true;
+  $('#macroSave').hidden = false;
+  $('#macroCancel').hidden = false;
+  $('#macroClear').hidden = true;
+  $('#macroSteps').hidden = false;
+  $('#macroCurrent').textContent = 'recording — type a sequence, Esc to cancel';
+  renderMacroSteps();
+  window.addEventListener('keydown', onMacroKeydown, true);
+  window.addEventListener('keyup', onMacroKeyup, true);
+}
+
+function endMacroRec() {
+  window.removeEventListener('keydown', onMacroKeydown, true);
+  window.removeEventListener('keyup', onMacroKeyup, true);
+  macroRec = null;
+  $('#macroRec').hidden = false;
+  $('#macroSave').hidden = true;
+  $('#macroCancel').hidden = true;
+  $('#macroSteps').hidden = true;
+}
+
+function onMacroKeydown(e) {
+  if (!macroRec) return;
+  e.preventDefault(); e.stopPropagation();
+  if (e.code === 'Escape') { endMacroRec(); startListening(); updateMacroUI(); return; }
+  if (e.repeat) return;
+  const u = eventKbdUsage(e.code);
+  if (u) { macroRec.push({ type: 0x81, usage: u.usage }); renderMacroSteps(); }
+}
+function onMacroKeyup(e) {
+  if (!macroRec || e.code === 'Escape') return;
+  e.preventDefault(); e.stopPropagation();
+  const u = eventKbdUsage(e.code);
+  if (u) { macroRec.push({ type: 0x01, usage: u.usage }); renderMacroSteps(); }
+}
+
+function renderMacroSteps() {
+  $('#macroSteps').textContent = (macroRec && macroRec.length)
+    ? macroRec.map(stepText).join(' ') : '(press keys…)';
+}
+
+async function saveMacro() {
+  if (!selected || !macroRec) return;
+  const steps = macroRec.slice();
+  if (!steps.length) { endMacroRec(); startListening(); return; }
+  const bytes = [];
+  for (const s of steps) bytes.push(s.type, s.usage, 0);
+  endMacroRec();
+  try {
+    log(`macro ${selected.hw} (0x${selected.code.toString(16)}): ${steps.length} steps`);
+    await kbd.writeMacro(selected.code, bytes, 1);
+    await refresh();
+    setStatus(`● macro saved to ${selected.hw}`, 'ok');
+    closePanel();
+  } catch (err) {
+    setStatus('● ' + err.message, 'err'); log('macro write failed: ' + err.message);
+    startListening();
+  }
+}
+
+async function clearMacroOnKey() {
+  if (!selected) return;
+  stopListening();
+  try {
+    log(`clear macro ${selected.hw}`);
+    await kbd.clearMacro(selected.code);
+    await refresh();
+    setStatus(`● macro cleared on ${selected.hw}`, 'ok');
+    closePanel();
+  } catch (err) {
+    setStatus('● ' + err.message, 'err'); log('clear macro failed: ' + err.message);
+    startListening();
+  }
+}
+
 function closePanel() {
+  if (macroRec) endMacroRec();
   stopListening();
   $('#panel').hidden = true;
   $('#panel').classList.remove('collapsed');
@@ -364,6 +490,10 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.querySelectorAll('.chip[data-action]').forEach((b) =>
     b.addEventListener('click', () => doAction(b.dataset.action)));
+  $('#macroRec').addEventListener('click', startMacroRec);
+  $('#macroSave').addEventListener('click', saveMacro);
+  $('#macroCancel').addEventListener('click', () => { endMacroRec(); startListening(); updateMacroUI(); });
+  $('#macroClear').addEventListener('click', clearMacroOnKey);
   window.addEventListener('keydown', testerFlash, false);
   if (!('hid' in navigator)) setStatus('● no WebHID — use Chrome/Edge', 'err');
 });

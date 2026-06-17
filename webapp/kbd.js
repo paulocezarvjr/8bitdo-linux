@@ -191,4 +191,92 @@ export class KeyboardDevice {
     if (USAGE[hwName] === undefined) throw new Error('no default usage for ' + hwName);
     return this.mapKey(hwcode, USAGE[hwName]);
   }
+
+  // ---- software macros (profile layer; protocol reversed from Ultimate
+  // Software V2, see docs/protocol-findings.md). Step = 3 bytes:
+  // down 81 <usage> 00, up 01 <usage> 00, delay 0F <ms lo> <ms hi>.
+  // Reads use NO attention prefix; commands are on report 0x52.
+  _macroAck(e) { return e && e.reportId === 0x54 && e.data.getUint8(0) === 0xe4 && e.data.getUint8(1) === 0x08; }
+
+  // keys that currently carry a software macro (52 82 -> 54 82 <key> <attr> … 00)
+  async getMacroKeys() {
+    this._drain();
+    const e = await this._send([0x82]);
+    if (!e || e.data.getUint8(0) !== 0x82) return [];
+    const keys = [];
+    for (let i = 1; i + 1 < e.data.byteLength; i += 2) {
+      const k = e.data.getUint8(i);
+      if (k === 0) break;
+      keys.push(k);
+    }
+    return keys;
+  }
+
+  // steps of the macro on `key` (52 86 <key>). Short macros fit one report.
+  async getMacroSteps(key) {
+    this._drain();
+    const e = await this._send([0x86, key]);
+    if (!e || e.data.getUint8(0) !== 0x86) return null;
+    const d = e.data;
+    const nsteps = d.getUint8(9);
+    const raw = [];
+    for (let i = 10; i < d.byteLength; i++) raw.push(d.getUint8(i));
+    const steps = [];
+    for (let i = 0; i + 2 < raw.length && steps.length < nsteps; i += 3) {
+      if (raw[i] === 0) break;
+      steps.push({ type: raw[i], usage: raw[i + 1], hi: raw[i + 2] });
+    }
+    return { cycles: d.getUint8(7), nsteps, steps };
+  }
+
+  // write `stepBytes` (flat [type,usage,0, …]) as the macro on `key`. Mirrors
+  // native writeMacroJP: single packet for <=21 bytes, else 19/18 chunking.
+  async writeMacro(key, stepBytes, cycles = 1) {
+    this._drain();
+    const n = stepBytes.length;
+    const numSteps = Math.floor(n / 3);
+    if (n <= 21) {
+      const p = new Array(32).fill(0);
+      p[0] = 0x76; p[1] = key; p[5] = 0x1a; p[6] = 0x01;
+      if (cycles === 0xff) p[8] = 0x20; else p[7] = cycles;
+      p[9] = numSteps;
+      for (let i = 0; i < n; i++) p[10 + i] = stepBytes[i];
+      const e = await this._send(p);
+      if (!this._macroAck(e)) throw new Error('macro write not acked (' + fmt(e) + ')');
+      this.log('macro write ack ' + fmt(e));
+      return;
+    }
+    let off = 0, first = true, last = null;
+    while (off < n) {
+      const rem = n - off;
+      const p = new Array(32).fill(0);
+      p[0] = 0x76; p[1] = key; p[2] = 0x01;
+      let take;
+      if (first) {
+        p[5] = 0x19; p[6] = 0x01;
+        if (cycles === 0xff) p[8] = 0x20; else p[7] = cycles;
+        p[9] = numSteps;
+        take = Math.min(20, rem);
+        first = false;
+      } else {
+        const addr = off + 4;
+        p[3] = addr & 0xff; p[4] = (addr >> 8) & 0xff;
+        take = Math.min(24, rem);
+        p[5] = rem > 24 ? 0x18 : rem;
+      }
+      for (let i = 0; i < take; i++) p[10 + i] = stepBytes[off + i];
+      last = await this._send(p);
+      off += take;
+    }
+    if (!this._macroAck(last)) throw new Error('macro write not acked (' + fmt(last) + ')');
+    this.log('macro write ack ' + fmt(last));
+  }
+
+  // remove the macro on `key` (52 77 <key> <count>)
+  async clearMacro(key, count = 200) {
+    this._drain();
+    const e = await this._send([0x77, key, count & 0xff]);
+    if (!this._macroAck(e)) throw new Error('clear macro not acked (' + fmt(e) + ')');
+    this.log('clear macro ack ' + fmt(e));
+  }
 }

@@ -460,6 +460,18 @@ body[data-theme="xbox"] .key[data-hw="right"] { --cap: #d8392e; --cap-2: #b02b22
 footer { text-align: center; color: var(--muted); font-size: 11px; padding: 18px; border-top: 1px solid var(--line); }
 footer a { color: var(--red); text-decoration: none; }
 
+/* macro editor (remap panel) */
+.macro-current { font-size: 11px; color: var(--muted); margin: 2px 0 6px; }
+.macro-steps {
+  font-size: 12px; color: #ffcf5a; margin: 2px 0 6px;
+  font-family: 'JetBrains Mono', monospace; word-break: break-word; min-height: 14px;
+}
+.quick-label small { color: var(--muted); font-weight: normal; font-size: 9px; }
+.key.has-macro::after {
+  content: "★"; position: absolute; top: 1px; left: 4px;
+  font-size: 9px; line-height: 1; color: #ffcf5a; pointer-events: none;
+}
+
 @media (max-width: 560px) {
   .wordmark { display: none; }
   .legendbar { display: none; }
