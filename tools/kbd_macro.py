@@ -227,10 +227,50 @@ def write_macro_steps(fd, key, step_bytes, interval_ms=0, cycles=1):
     return last
 
 
-def clear_macro(fd, key, count):
+def attn(fd):
+    """Enter edit mode (SwitchReport 0xff)."""
     _drain(fd)
-    send(fd, [0x77, key, count])
+    send(fd, [0x76, 0xFF])
+    read_raw(fd, 0.3)
+
+
+def finalize(fd):
+    """Commit edits (SwitchReport 0xa5 == the remap MAP_DONE)."""
+    send(fd, [0x76, 0xA5])
     return read_raw(fd, 0.5)
+
+
+def write_macro_name(fd, key, name_bytes=b""):
+    """52 74 <key> <len> 00 <name utf16, 28-byte field> (single packet)."""
+    n = len(name_bytes)
+    pkt = bytearray(32)
+    pkt[0] = 0x74
+    pkt[1] = key
+    if n <= 0x1c:
+        pkt[2] = n
+    else:
+        pkt[2], pkt[3] = 0x1c, 0x01
+    pkt[4:4 + min(n, 28)] = name_bytes[:28]
+    send(fd, pkt)
+    return read_raw(fd, 0.5)
+
+
+def set_macro(fd, key, step_bytes, name=b"", cycles=1):
+    """Full official save sequence: attn, name, steps, finalize."""
+    attn(fd)
+    write_macro_name(fd, key, name)
+    time.sleep(0.05)
+    write_macro_steps(fd, key, step_bytes, cycles=cycles)
+    time.sleep(0.05)
+    return finalize(fd)
+
+
+def clear_macro(fd, key, count):
+    attn(fd)
+    send(fd, [0x77, key, count])
+    ack = read_raw(fd, 0.5)
+    finalize(fd)
+    return ack
 
 
 def main():
@@ -264,7 +304,7 @@ def main():
                 steps = steps_from_text(text)
                 print(f"set macro {hwname} (0x{key:02x}) = {text!r} "
                       f"({len(steps)//3} steps)")
-                print("  ack:", (write_macro_steps(fd, key, steps) or b"").hex())
+                print("  ack:", (set_macro(fd, key, steps) or b"").hex())
                 print("  re-read:", [r.hex() for r in get_macro_list(fd)])
         else:
             print(__doc__)

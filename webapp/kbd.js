@@ -229,54 +229,66 @@ export class KeyboardDevice {
     return { cycles: d.getUint8(7), nsteps, steps };
   }
 
-  // write `stepBytes` (flat [type,usage,0, …]) as the macro on `key`. Mirrors
-  // native writeMacroJP: single packet for <=21 bytes, else 19/18 chunking.
-  async writeMacro(key, stepBytes, cycles = 1) {
-    this._drain();
-    const n = stepBytes.length;
-    const numSteps = Math.floor(n / 3);
-    if (n <= 21) {
-      const p = new Array(32).fill(0);
-      p[0] = 0x76; p[1] = key; p[5] = 0x1a; p[6] = 0x01;
+  async _finalize() {                                          // SwitchReport(0xa5): commit (== MAP_DONE)
+    const e = await this._send([0x76, 0xa5]);
+    if (!this._macroAck(e)) throw new Error('macro finalize not acked (' + fmt(e) + ')');
+  }
+  async _writeMacroName(key, nameBytes = []) {                 // 52 74 <key> <len> 00 <utf16 name, 28B>
+    const n = nameBytes.length;
+    const p = new Array(32).fill(0);
+    p[0] = 0x74; p[1] = key;
+    if (n <= 0x1c) p[2] = n; else { p[2] = 0x1c; p[3] = 0x01; }
+    for (let i = 0; i < Math.min(n, 28); i++) p[4 + i] = nameBytes[i];
+    const e = await this._send(p);
+    if (!this._macroAck(e)) throw new Error('macro name not acked (' + fmt(e) + ')');
+  }
+  _macroStepsPacket(key, stepBytes, cycles, off, first) {      // one 0x76 write packet
+    const n = stepBytes.length, numSteps = Math.floor(n / 3), p = new Array(32).fill(0);
+    p[0] = 0x76; p[1] = key;
+    const rem = n - off;
+    let take;
+    if (n <= 21) {                                            // single packet
+      p[5] = 0x1a; p[6] = 0x01;
       if (cycles === 0xff) p[8] = 0x20; else p[7] = cycles;
-      p[9] = numSteps;
-      for (let i = 0; i < n; i++) p[10 + i] = stepBytes[i];
-      const e = await this._send(p);
-      if (!this._macroAck(e)) throw new Error('macro write not acked (' + fmt(e) + ')');
-      this.log('macro write ack ' + fmt(e));
-      return;
+      p[9] = numSteps; take = n;
+    } else if (first) {                                       // multi-chunk start
+      p[2] = 0x01; p[5] = 0x19; p[6] = 0x01;
+      if (cycles === 0xff) p[8] = 0x20; else p[7] = cycles;
+      p[9] = numSteps; take = Math.min(20, rem);
+    } else {                                                  // multi-chunk data
+      p[2] = 0x01; const addr = off + 4; p[3] = addr & 0xff; p[4] = (addr >> 8) & 0xff;
+      take = Math.min(24, rem); p[5] = rem > 24 ? 0x18 : rem;
     }
-    let off = 0, first = true, last = null;
-    while (off < n) {
-      const rem = n - off;
-      const p = new Array(32).fill(0);
-      p[0] = 0x76; p[1] = key; p[2] = 0x01;
-      let take;
-      if (first) {
-        p[5] = 0x19; p[6] = 0x01;
-        if (cycles === 0xff) p[8] = 0x20; else p[7] = cycles;
-        p[9] = numSteps;
-        take = Math.min(20, rem);
-        first = false;
-      } else {
-        const addr = off + 4;
-        p[3] = addr & 0xff; p[4] = (addr >> 8) & 0xff;
-        take = Math.min(24, rem);
-        p[5] = rem > 24 ? 0x18 : rem;
-      }
-      for (let i = 0; i < take; i++) p[10 + i] = stepBytes[off + i];
-      last = await this._send(p);
-      off += take;
-    }
-    if (!this._macroAck(last)) throw new Error('macro write not acked (' + fmt(last) + ')');
-    this.log('macro write ack ' + fmt(last));
+    for (let i = 0; i < take; i++) p[10 + i] = stepBytes[off + i];
+    return { p, take };
   }
 
-  // remove the macro on `key` (52 77 <key> <count>)
+  // Write `stepBytes` (flat [type,usage,0, …]) as the macro on `key`, using the
+  // full official save sequence (attn -> name -> steps -> finalize). Without the
+  // finalize the macro is staged but never committed, so the key won't fire it.
+  async writeMacro(key, stepBytes, cycles = 1, nameBytes = []) {
+    this._drain();
+    await this._attn();
+    await this._writeMacroName(key, nameBytes);
+    const n = stepBytes.length;
+    let off = 0, first = true, last = null;
+    do {
+      const { p, take } = this._macroStepsPacket(key, stepBytes, cycles, off, first);
+      last = await this._send(p);
+      if (!this._macroAck(last)) throw new Error('macro write not acked (' + fmt(last) + ')');
+      off += take; first = false;
+    } while (off < n);
+    this.log('macro write ack ' + fmt(last));
+    await this._finalize();
+  }
+
+  // remove the macro on `key` (attn -> 52 77 <key> <count> -> finalize)
   async clearMacro(key, count = 200) {
     this._drain();
+    await this._attn();
     const e = await this._send([0x77, key, count & 0xff]);
     if (!this._macroAck(e)) throw new Error('clear macro not acked (' + fmt(e) + ')');
     this.log('clear macro ack ' + fmt(e));
+    await this._finalize();
   }
 }
