@@ -188,3 +188,66 @@ The full block layout (profiles, dead zones, swaps, per-button remap) is in
       make that safe.
 - [ ] Mouse: identify which interface (hidraw3 vs hidraw4) the software uses;
       likely requires a Windows capture (USBPcap/API Monitor).
+
+## Keyboard MACRO protocol — reversed from Ultimate Software V2 (no capture needed)
+
+Reversed by **static analysis of the official app** instead of a USB capture:
+download `8BitDo_Ultimate_Software_V2_Windows_V*.zip`, extract the .NET
+single-file bundle (the app DLL is stored uncompressed), and decompile
+`8BitDo Ultimate Software V2.dll` (managed, ILSpy) + disassemble
+`8BitDoAdvance.dll` (native, `objdump`). In the code the **Retro Mechanical
+Keyboard is the "JP" device** (`VIDPID.PID_JP = 0x5200`, `PID_JPUSB = 0x5201`;
+the Retro 108 = `108JP` 0x5209; the R8 mouse = `PID_Mouse/RR` 0x5205/0x5206).
+
+### Two independent macro stores (important)
+- **★ star / base layer** — where an on-device star-recorded macro lives. Active
+  when the software profile is OFF. **Not exposed** by `GetMacro` (read back
+  empty even with a live star macro), and the official app does not touch it.
+- **Software / profile layer** — what Ultimate Software V2 reads/writes (and what
+  we can fully control). Active when the profile is engaged (the 8BitDo-logo
+  key). Up to **8 macro slots**, each bound to a key, with a UTF-16 name.
+
+### Transport
+Same vendor interface as the rest (report `0x52` out / `0x54` in, UsagePage
+`0x008C`). Native `WriteHidJP(buf,len)` prepends report id `0x52` then `buf`;
+`ReadHidJP(buf,33)` reads a `0x54` report. Reads use **no ATTN**, a `Sleep(5ms)`
+between write and read, and may span multiple chunks.
+
+### Macro step encoding (3 bytes/step) — from C# `KeyBoardTools.getdata` + `getMacroData`
+| step | bytes |
+|---|---|
+| key **down** | `81 <hid_usage> 00` |
+| key **up**   | `01 <hid_usage> 00` |
+| **delay**    | `0F <ms_lo> <ms_hi>` (u16 LE) |
+
+`num_event` (the u16 after the type byte) = the HID usage for down/up, or the ms
+for a delay. Steps are concatenated (`getbuffer`), terminated by action `Null`.
+e.g. typing `abcd` = `81 04 00 · 01 04 00 · 81 05 00 · 01 05 00 · 81 06 00 ·
+01 06 00 · 81 07 00 · 01 07 00`.
+
+### Read (READ-ONLY, verified on device)
+- `GetMacro`      → send `52 82`            → resp `54 82 …` = macro list / slots
+- `GetMacroName(i)` → send `52 84 <i>`      → resp `54 84 …` = name of slot i
+- `GetMacroValue(i)`→ send `52 86 <i>`      → resp `54 86 …` = steps of slot i
+  (`i` = slot index 0..7, NOT a key code; bad index acks `54 e4 0a`).
+
+In-memory struct the app parses the read into (`JP_macro_fun_record_t`, 8 of
+them): `{ u8 count; u8 cycles_num; u16 interval_ms; u8 key; u8 name[61];
+JP_macro_record_t macrorecord[200]; }` where `JP_macro_record_t =
+{ u8 reserve; u8 type; u16 num_event; }`.
+
+### Write (decoded from native `_writeMacroJP@20`; round-trip TBD on hardware)
+C# recipe (`JPAdvance.writestruct`): per slot →
+`writeMacroName(key, nameUtf16, len)` then
+`writeMacro(key, stepBytes, stepBytes.Length, interval_ms /*Loop*/, cycles_num /*count*/)`
+(EntryPoint `writeMacroJP`); `ClearMacro(key, count)` removes a slot.
+
+`writeMacroJP` builds a `0x76`-family packet (sent via `WriteHidJP`, so wire =
+`52 76 …`). For a short macro (`stepBytes.length ≤ 21`, ≤7 steps, one report):
+```
+52 76 <key> 00 00 00 1a 01 <cycles> 00 <num_steps> <step bytes…>
+```
+(`pkt[8]=0x20` instead of `pkt[7]=cycles` when cycles==0xff). Longer macros use
+multi-chunk: first packet `… 19 01 <cycles> .. <num_steps> <first 20 step bytes>`,
+then data chunks `pkt[2]=01, pkt[3..4]=offset+4 (LE), pkt[5]=0x18, <24 bytes>`,
+final chunk `pkt[5]=remaining`. Sub-opcodes: `1a`=single, `19`=start, `18`=chunk.
